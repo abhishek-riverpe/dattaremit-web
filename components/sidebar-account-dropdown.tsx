@@ -4,7 +4,8 @@ import { useClerk, useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
-import { LogOut, Moon, Sun, UserPen, MapPin, ChevronsUpDown } from "lucide-react";
+import { LogOut, Moon, Sun, UserPen, MapPin, ChevronsUpDown, ShieldCheck } from "lucide-react";
+import { useAccount } from "@/hooks/api";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -24,6 +25,7 @@ export function SidebarAccountDropdown() {
   const { signOut } = useClerk();
   const router = useRouter();
   const { setTheme } = useTheme();
+  const { data: account } = useAccount();
 
   const displayName = user?.fullName || user?.emailAddresses[0]?.emailAddress || "";
   const email = user?.emailAddresses[0]?.emailAddress || "";
@@ -72,6 +74,12 @@ export function SidebarAccountDropdown() {
             <MapPin />
             Edit Addresses
           </DropdownMenuItem>
+          {account?.accountStatus && account.accountStatus !== "ACTIVE" && (
+            <DropdownMenuItem onClick={() => router.push("/kyc")}>
+              <ShieldCheck />
+              Complete KYC
+            </DropdownMenuItem>
+          )}
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuSub>

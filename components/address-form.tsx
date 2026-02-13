@@ -137,7 +137,12 @@ export function AddressForm() {
       await Promise.all([presentPromise, permanentPromise]);
 
       toast.success("Addresses updated successfully");
-      router.replace("/");
+
+      if (existingPresentAddress || existingPermanentAddress) {
+        router.replace("/");
+      } else {
+        router.replace("/submit-profile");
+      }
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : "Something went wrong";

@@ -17,6 +17,7 @@ import {
   ChevronRight,
   LogOut,
   Sun,
+  ShieldCheck,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 
@@ -125,6 +126,21 @@ export default function AccountPage() {
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </button>
             <Separator />
+            {account?.accountStatus && account.accountStatus !== "ACTIVE" && (
+              <>
+                <button
+                  onClick={() => router.push("/kyc")}
+                  className="flex w-full items-center justify-between px-4 py-3 transition-colors hover:bg-muted/50"
+                >
+                  <div className="flex items-center gap-3">
+                    <ShieldCheck className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm">Complete KYC</span>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                </button>
+                <Separator />
+              </>
+            )}
             <div className="flex w-full items-center justify-between px-4 py-3">
               <div className="flex items-center gap-3">
                 <Sun className="h-4 w-4 text-muted-foreground" />

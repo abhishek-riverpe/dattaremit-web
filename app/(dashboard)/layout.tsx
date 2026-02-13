@@ -50,6 +50,8 @@ export default function DashboardLayout({
         !account.user.phoneNumber ||
         !account.user.dateOfBirth);
 
+    const onboardingPages = ["/edit-profile", "/edit-addresses", "/submit-profile", "/kyc"];
+
     // If no user in DB or missing required profile fields, redirect to edit-profile
     if (noProfile || needsProfileInfo) {
       if (pathname !== "/edit-profile") {
@@ -61,6 +63,18 @@ export default function DashboardLayout({
     // Block edit-addresses if user has no profile
     if (pathname === "/edit-addresses" && !account?.user) {
       router.replace("/edit-profile");
+      return;
+    }
+
+    // If profile is complete but account not yet submitted, redirect to submit-profile
+    const hasAddresses = (account?.addresses?.length ?? 0) > 0;
+    if (
+      account?.accountStatus === "INITIAL" &&
+      account?.user &&
+      hasAddresses &&
+      !onboardingPages.includes(pathname)
+    ) {
+      router.replace("/submit-profile");
     }
   }, [isLoaded, isSignedIn, accountLoading, error, account, pathname, router]);
 
@@ -81,11 +95,23 @@ export default function DashboardLayout({
       !account.user.phoneNumber ||
       !account.user.dateOfBirth);
 
+  const onboardingPages = ["/edit-profile", "/edit-addresses", "/submit-profile", "/kyc"];
+
   if ((noProfile || needsProfileInfo) && pathname !== "/edit-profile") {
     return null;
   }
 
   if (pathname === "/edit-addresses" && !account?.user) {
+    return null;
+  }
+
+  const hasAddresses = (account?.addresses?.length ?? 0) > 0;
+  if (
+    account?.accountStatus === "INITIAL" &&
+    account?.user &&
+    hasAddresses &&
+    !onboardingPages.includes(pathname)
+  ) {
     return null;
   }
 

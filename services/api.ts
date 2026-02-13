@@ -8,6 +8,7 @@ import type {
   UpdateUserPayload,
   CreateAddressPayload,
   UpdateAddressPayload,
+  ZynkKycData,
 } from "@/types/api";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -95,3 +96,12 @@ export const updateAddress = (
 
 export const deleteAddress = (id: string): Promise<void> =>
   api.delete(`/addresses/${id}`);
+
+// ── Zynk (KYC) ──
+export const createZynkEntity = (idempotencyKey?: string): Promise<User> =>
+  api.post("/zynk/entities", undefined, {
+    headers: idempotencyKey ? { "idempotency-key": idempotencyKey } : {},
+  });
+
+export const startKyc = (): Promise<ZynkKycData> =>
+  api.post("/zynk/kyc");

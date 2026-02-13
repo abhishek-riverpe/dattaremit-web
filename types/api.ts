@@ -79,6 +79,13 @@ export interface UpdateAddressPayload {
   isDefault?: boolean;
 }
 
+export interface ZynkKycData {
+  message: string;
+  kycLink: string;
+  tosLink: string;
+  kycStatus: string;
+}
+
 export type AccountUser = Omit<User, "addresses">;
 
 export interface Account {
