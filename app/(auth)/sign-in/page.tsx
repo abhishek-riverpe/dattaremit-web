@@ -28,6 +28,8 @@ export default function SignInPage() {
   const { signIn, setActive, isLoaded } = useSignIn();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [pendingSecondFactor, setPendingSecondFactor] = useState(false);
+  const [code, setCode] = useState("");
 
   const form = useForm<SignInFormData>({
     resolver: yupResolver(signInSchema),
@@ -41,21 +43,94 @@ export default function SignInPage() {
     try {
       const signInAttempt = await signIn.create({
         identifier: data.email,
-        password: data.password,
       });
 
       if (signInAttempt.status === "complete") {
         await setActive({ session: signInAttempt.createdSessionId });
         router.replace("/");
-      } else {
-        toast.error("Sign in could not be completed.");
+        return;
       }
+
+      if (signInAttempt.status === "needs_first_factor") {
+        const result = await signIn.attemptFirstFactor({
+          strategy: "password",
+          password: data.password,
+        });
+
+        if (result.status === "complete") {
+          await setActive({ session: result.createdSessionId });
+          router.replace("/");
+          return;
+        }
+
+        if (result.status === "needs_second_factor") {
+          await signIn.prepareSecondFactor({ strategy: "email_code" });
+          setPendingSecondFactor(true);
+          return;
+        }
+      }
+
+      toast.error("Sign in could not be completed.");
     } catch (err: unknown) {
       toast.error(getClerkErrorMessage(err, "Sign in failed. Please try again."));
     } finally {
       setLoading(false);
     }
   };
+
+  const onVerifySecondFactor = async () => {
+    if (!isLoaded) return;
+    setLoading(true);
+
+    try {
+      const result = await signIn.attemptSecondFactor({
+        strategy: "email_code",
+        code,
+      });
+
+      if (result.status === "complete") {
+        await setActive({ session: result.createdSessionId });
+        router.replace("/");
+      }
+    } catch (err: unknown) {
+      toast.error(
+        getClerkErrorMessage(err, "Verification failed. Please try again."),
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (pendingSecondFactor) {
+    return (
+      <div>
+        <AuthPageHeader
+          title="Check your email"
+          subtitle="Enter the verification code sent to your email"
+        />
+        <div className="space-y-4">
+          <Input
+            type="text"
+            inputMode="numeric"
+            placeholder="Enter 6-digit code"
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            maxLength={6}
+            autoFocus
+          />
+          <Button
+            className="w-full"
+            size="lg"
+            disabled={loading || code.length < 6}
+            onClick={onVerifySecondFactor}
+          >
+            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Verify
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
