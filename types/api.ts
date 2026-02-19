@@ -33,6 +33,7 @@ export interface User {
   dateOfBirth: string;
   accountStatus: string;
   zynkExternalAccountId?: string | null;
+  zynkDepositAccountId?: string | null;
   addresses?: Address[];
   created_at: string;
   updated_at: string;
@@ -108,6 +109,19 @@ export interface AddExternalAccountPayload {
   paymentRail: string;
   plaidPublicToken: string;
   plaidAccountId: string;
+}
+
+// ── Deposit Account ──
+
+export interface AddDepositAccountPayload {
+  accountNumber: string;
+  ifscCode: string;
+  accountHolderName: string;
+  bankName: string;
+  branchName: string;
+  bankCountry: string;
+  bankAccountType: string;
+  phoneNumber: string;
 }
 
 // ── Activity ──

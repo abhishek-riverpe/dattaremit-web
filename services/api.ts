@@ -11,6 +11,7 @@ import type {
   ZynkKycData,
   PlaidLinkToken,
   AddExternalAccountPayload,
+  AddDepositAccountPayload,
   Activity,
   ActivityListResponse,
   ActivityQueryParams,
@@ -119,6 +120,11 @@ export const generatePlaidLinkToken = (): Promise<PlaidLinkToken> =>
 export const addExternalAccount = (
   data: AddExternalAccountPayload
 ): Promise<User> => api.post("/zynk/external-account", data);
+
+// ── Zynk (Deposit Account) ──
+export const addDepositAccount = (
+  data: AddDepositAccountPayload
+): Promise<User> => api.post("/zynk/deposit-account", data);
 
 // ── Activity ──
 export const getActivities = (

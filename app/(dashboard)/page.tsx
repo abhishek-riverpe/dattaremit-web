@@ -28,6 +28,10 @@ export default function HomePage() {
         : "Failed to load data"
       : null;
 
+  const hasSendAccount = !!user?.zynkExternalAccountId;
+  const hasReceiveAccount = !!user?.zynkDepositAccountId;
+  const bothLinked = hasSendAccount && hasReceiveAccount;
+
   // Layout handles redirect for needsProfile and needsProfileInfo cases
   if (isLoading || needsProfile) {
     return (
@@ -76,7 +80,7 @@ export default function HomePage() {
         </p>
       </div>
 
-      {account.accountStatus === "ACTIVE" && !user?.zynkExternalAccountId && (
+      {account.accountStatus === "ACTIVE" && !bothLinked && (
         <Card>
           <CardHeader className="flex flex-row items-center gap-3 space-y-0">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
@@ -100,16 +104,16 @@ export default function HomePage() {
         </Card>
       )}
 
-      {user?.zynkExternalAccountId && (
+      {bothLinked && (
         <Card>
           <CardHeader className="flex flex-row items-center gap-3 space-y-0">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
               <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
             </div>
             <div className="flex-1">
-              <CardTitle className="text-base">Account Linked</CardTitle>
+              <CardTitle className="text-base">Accounts Linked</CardTitle>
               <CardDescription>
-                Your bank account is connected and ready to use.
+                Your bank accounts are connected and ready to use.
               </CardDescription>
             </div>
           </CardHeader>

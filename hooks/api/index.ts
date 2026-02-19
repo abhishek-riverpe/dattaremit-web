@@ -7,4 +7,5 @@ export { useSubmitProfile } from "./use-submit-profile";
 export { useStartKyc } from "./use-start-kyc";
 export { usePlaidLinkToken } from "./use-plaid-link-token";
 export { useAddExternalAccount } from "./use-external-account";
+export { useAddDepositAccount } from "./use-deposit-account";
 export { useActivities } from "./use-activities";
