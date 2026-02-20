@@ -28,16 +28,9 @@ export default function HomePage() {
         : "Failed to load data"
       : null;
 
-  const userCountry =
-    account?.addresses?.find((addr) => addr.isDefault)?.country ||
-    account?.addresses?.[0]?.country;
-  const isUSUser = userCountry === "US";
-
   const hasSendAccount = !!user?.zynkExternalAccountId;
   const hasReceiveAccount = !!user?.zynkDepositAccountId;
-  const bothLinked = isUSUser
-    ? hasSendAccount && hasReceiveAccount
-    : hasReceiveAccount;
+  const bothLinked = hasSendAccount && hasReceiveAccount;
 
   // Layout handles redirect for needsProfile and needsProfileInfo cases
   if (isLoading || needsProfile) {
@@ -98,9 +91,7 @@ export default function HomePage() {
                 Link Your Bank Account
               </CardTitle>
               <CardDescription>
-                {isUSUser
-                  ? "Connect your bank to start sending and receiving money."
-                  : "Add your bank details to start receiving money."}
+                Connect your bank and add a beneficiary to start sending money.
               </CardDescription>
             </div>
           </CardHeader>

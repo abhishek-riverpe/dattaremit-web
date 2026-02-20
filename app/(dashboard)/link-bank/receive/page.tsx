@@ -69,11 +69,11 @@ export default function ReceiveBankPage() {
         phoneNumber: `+91${data.phoneNumber}`,
       });
       await queryClient.invalidateQueries({ queryKey: queryKeys.account });
-      toast.success("Bank account added successfully!");
+      toast.success("Beneficiary added successfully!");
       router.push("/link-bank");
     } catch (err) {
       toast.error(
-        err instanceof ApiError ? err.message : "Failed to add bank account"
+        err instanceof ApiError ? err.message : "Failed to add beneficiary"
       );
     }
   };
@@ -90,9 +90,9 @@ export default function ReceiveBankPage() {
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <CardTitle>Add Indian Bank Account</CardTitle>
+          <CardTitle>Add Beneficiary</CardTitle>
           <CardDescription>
-            Enter your bank details to receive money in India.
+            Enter your recipient&apos;s bank details to send money to India.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -232,7 +232,7 @@ export default function ReceiveBankPage() {
                 {addDeposit.isPending && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 )}
-                Add Bank Account
+                Add Beneficiary
               </Button>
             </form>
           </Form>

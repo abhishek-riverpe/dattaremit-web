@@ -24,11 +24,6 @@ export default function LinkBankPage() {
   const user = account?.user;
   const addExternal = useAddExternalAccount();
 
-  const userCountry =
-    account?.addresses?.find((addr) => addr.isDefault)?.country ||
-    account?.addresses?.[0]?.country;
-  const isUSUser = userCountry === "US";
-
   function handlePlaidSuccess(publicToken: string, metadata: unknown) {
     const meta = metadata as {
       accounts?: { id: string; name?: string }[];
@@ -70,62 +65,57 @@ export default function LinkBankPage() {
     );
   }
 
-  const allLinked = isUSUser
-    ? !!user?.zynkExternalAccountId && !!user?.zynkDepositAccountId
-    : !!user?.zynkDepositAccountId;
+  const allLinked =
+    !!user?.zynkExternalAccountId && !!user?.zynkDepositAccountId;
 
   return (
     <div className="flex flex-1 flex-col items-center justify-center">
       <div className="w-full max-w-2xl space-y-4">
-        <h1 className="text-2xl font-bold text-center">Link Bank Accounts</h1>
+        <h1 className="text-2xl font-bold text-center">Link Bank Account &amp; Add Beneficiary</h1>
         <p className="text-center text-muted-foreground">
-          {isUSUser
-            ? "Connect your bank accounts to send and receive money."
-            : "Add your bank details to receive money."}
+          Connect your bank and add a beneficiary to start sending money.
         </p>
 
-        <div className={`grid gap-4 ${isUSUser ? "sm:grid-cols-2" : ""}`}>
-          {/* Send Money Card – US users only */}
-          {isUSUser && (
-            <Card>
-              <CardHeader className="text-center">
-                <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                  {user?.zynkExternalAccountId ? (
-                    <CheckCircle2 className="h-6 w-6 text-green-600 dark:text-green-400" />
-                  ) : (
-                    <Building2 className="h-6 w-6 text-primary" />
-                  )}
-                </div>
-                <CardTitle className="text-lg">Send Money</CardTitle>
-                <CardDescription>
-                  Link your US bank account via Plaid to send money.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex flex-col items-center gap-3">
+        <div className="grid gap-4 sm:grid-cols-2">
+          {/* Link Bank Account Card */}
+          <Card>
+            <CardHeader className="text-center">
+              <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
                 {user?.zynkExternalAccountId ? (
-                  <p className="text-sm font-medium text-green-600 dark:text-green-400">
-                    Account linked
-                  </p>
-                ) : addExternal.isPending ? (
-                  <Button disabled size="lg">
-                    <Loader2 className="animate-spin" />
-                    Setting up account...
-                  </Button>
+                  <CheckCircle2 className="h-6 w-6 text-green-600 dark:text-green-400" />
                 ) : (
-                  <PlaidLinkButton onSuccess={handlePlaidSuccess} />
+                  <Building2 className="h-6 w-6 text-primary" />
                 )}
-                {addExternal.isError && (
-                  <p className="text-sm text-destructive">
-                    {addExternal.error instanceof ApiError
-                      ? addExternal.error.message
-                      : "Something went wrong. Please try again."}
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          )}
+              </div>
+              <CardTitle className="text-lg">Link Bank Account</CardTitle>
+              <CardDescription>
+                Link your US bank account via Plaid to fund transfers.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col items-center gap-3">
+              {user?.zynkExternalAccountId ? (
+                <p className="text-sm font-medium text-green-600 dark:text-green-400">
+                  Account linked
+                </p>
+              ) : addExternal.isPending ? (
+                <Button disabled size="lg">
+                  <Loader2 className="animate-spin" />
+                  Setting up account...
+                </Button>
+              ) : (
+                <PlaidLinkButton onSuccess={handlePlaidSuccess} />
+              )}
+              {addExternal.isError && (
+                <p className="text-sm text-destructive">
+                  {addExternal.error instanceof ApiError
+                    ? addExternal.error.message
+                    : "Something went wrong. Please try again."}
+                </p>
+              )}
+            </CardContent>
+          </Card>
 
-          {/* Receive Money Card */}
+          {/* Add Beneficiary Card */}
           <Card>
             <CardHeader className="text-center">
               <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
@@ -135,11 +125,9 @@ export default function LinkBankPage() {
                   <Landmark className="h-6 w-6 text-primary" />
                 )}
               </div>
-              <CardTitle className="text-lg">
-                {isUSUser ? "Receive Money" : "Add Bank Account"}
-              </CardTitle>
+              <CardTitle className="text-lg">Add Beneficiary</CardTitle>
               <CardDescription>
-                Add your Indian bank details to receive money.
+                Add your recipient&apos;s Indian bank details.
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col items-center gap-3">
@@ -149,7 +137,7 @@ export default function LinkBankPage() {
                 </p>
               ) : (
                 <Button onClick={() => router.push("/link-bank/receive")}>
-                  Add Bank Details
+                  Add Beneficiary
                   <ArrowRight />
                 </Button>
               )}
