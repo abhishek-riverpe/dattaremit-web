@@ -5,12 +5,10 @@ import { useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { addressSchema, type AddressFormData } from "@/schemas/address.schema";
-import {
-  useAccount,
-  useCreateAddress,
-  useUpdateAddress,
-} from "@/hooks/api";
-import { apiAddressToForm, addressesEqual } from "@/utils/profile-helpers";
+import { useAccount } from "@/hooks/api";
+import { submitOnboardingAddress } from "@/services/api";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/constants/query-keys";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import {
@@ -26,47 +24,41 @@ import {
   FormField,
   FormItem,
   FormLabel,
+  FormMessage,
 } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AddressFieldGroup } from "@/components/address-field-group";
+import { CountrySelector } from "@/components/country-selector";
 
 export function AddressForm() {
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const { data: account, isLoading } = useAccount();
-  const existingPresentAddress = account?.addresses?.find(
+  const existingAddress = account?.addresses?.find(
     (a) => a.type === "PRESENT"
   );
-  const existingPermanentAddress = account?.addresses?.find(
-    (a) => a.type === "PERMANENT"
-  );
 
-  const createAddressMutation = useCreateAddress();
-  const updateAddressMutation = useUpdateAddress();
-  const loading =
-    createAddressMutation.isPending || updateAddressMutation.isPending;
-
-  const emptyAddress = {
-    addressLine1: "",
-    addressLine2: "",
-    city: "",
-    state: "",
-    postalCode: "",
-    country: "",
-  };
+  const addressMutation = useMutation({
+    mutationFn: submitOnboardingAddress,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.addresses.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.account });
+    },
+  });
 
   const form = useForm<AddressFormData>({
     resolver: yupResolver(addressSchema),
     defaultValues: {
-      presentAddress: emptyAddress,
-      sameAsPresent: false,
-      permanentAddress: emptyAddress,
+      country: "",
+      state: "",
+      city: "",
+      addressLine1: "",
+      postalCode: "",
     },
   });
 
-  const sameAsPresent = form.watch("sameAsPresent");
   const hasPopulated = useRef(false);
 
   useEffect(() => {
@@ -74,74 +66,34 @@ export function AddressForm() {
     hasPopulated.current = true;
 
     const present = account.addresses?.find((a) => a.type === "PRESENT");
-    const permanent = account.addresses?.find((a) => a.type === "PERMANENT");
-
-    const values: Partial<AddressFormData> = {};
-
     if (present) {
-      const presentForm = apiAddressToForm(present);
-      values.presentAddress = presentForm;
-
-      if (permanent) {
-        const permanentForm = apiAddressToForm(permanent);
-        values.permanentAddress = permanentForm;
-        values.sameAsPresent = addressesEqual(presentForm, permanentForm);
-      }
-    } else if (permanent) {
-      values.permanentAddress = apiAddressToForm(permanent);
+      form.reset({
+        country: present.country || "",
+        state: present.state || "",
+        city: present.city || "",
+        addressLine1: present.addressLine1 || "",
+        postalCode: present.postalCode || "",
+      });
     }
-
-    form.reset({ ...form.getValues(), ...values });
   }, [account, form]);
 
   const onSubmit = async (data: AddressFormData) => {
     try {
-      const presentData = {
-        type: "PRESENT" as const,
-        addressLine1: data.presentAddress.addressLine1,
-        addressLine2: data.presentAddress.addressLine2 || undefined,
-        city: data.presentAddress.city,
-        state: data.presentAddress.state,
-        postalCode: data.presentAddress.postalCode,
-        country: data.presentAddress.country,
-        isDefault: true,
-      };
+      await addressMutation.mutateAsync({
+        type: "PRESENT",
+        addressLine1: data.addressLine1,
+        city: data.city,
+        state: data.state,
+        country: data.country,
+        postalCode: data.postalCode,
+      });
 
-      const finalPermanent = data.sameAsPresent
-        ? data.presentAddress
-        : data.permanentAddress;
-      const permanentData = {
-        type: "PERMANENT" as const,
-        addressLine1: finalPermanent.addressLine1,
-        addressLine2: finalPermanent.addressLine2 || undefined,
-        city: finalPermanent.city,
-        state: finalPermanent.state,
-        postalCode: finalPermanent.postalCode,
-        country: finalPermanent.country,
-      };
+      toast.success("Address saved successfully");
 
-      const presentPromise = existingPresentAddress
-        ? updateAddressMutation.mutateAsync({
-            id: existingPresentAddress.id,
-            data: presentData,
-          })
-        : createAddressMutation.mutateAsync(presentData);
-
-      const permanentPromise = existingPermanentAddress
-        ? updateAddressMutation.mutateAsync({
-            id: existingPermanentAddress.id,
-            data: permanentData,
-          })
-        : createAddressMutation.mutateAsync(permanentData);
-
-      await Promise.all([presentPromise, permanentPromise]);
-
-      toast.success("Addresses updated successfully");
-
-      if (existingPresentAddress || existingPermanentAddress) {
+      if (existingAddress) {
         router.replace("/");
       } else {
-        router.replace("/submit-profile");
+        router.replace("/kyc");
       }
     } catch (err: unknown) {
       const message =
@@ -169,45 +121,94 @@ export function AddressForm() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-2xl">Edit addresses</CardTitle>
+        <CardTitle className="text-2xl">Your Address</CardTitle>
         <CardDescription>Where do you live?</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <AddressFieldGroup prefix="presentAddress" title="Present Address" />
-
-            {/* Same as present checkbox */}
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
-              name="sameAsPresent"
+              name="country"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center gap-2">
-                  <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormLabel className="!mt-0 text-sm font-normal text-muted-foreground">
-                    Permanent address same as present
-                  </FormLabel>
+                <FormItem>
+                  <CountrySelector
+                    label="Country"
+                    value={field.value}
+                    onSelect={field.onChange}
+                    placeholder="Select country"
+                    error={form.formState.errors.country?.message}
+                  />
                 </FormItem>
               )}
             />
 
-            {!sameAsPresent && (
-              <AddressFieldGroup prefix="permanentAddress" title="Permanent Address" />
-            )}
+            <FormField
+              control={form.control}
+              name="state"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>State / Division</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter state" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="city"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>City</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter city" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="addressLine1"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Street Address</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter street address" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="postalCode"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Postal Code</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter postal code" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <div className="space-y-3 pt-2">
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading && (
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={addressMutation.isPending}
+              >
+                {addressMutation.isPending && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 )}
-                {existingPresentAddress || existingPermanentAddress
-                  ? "Update"
-                  : "Save"}
+                {existingAddress ? "Update" : "Save"}
               </Button>
             </div>
           </form>

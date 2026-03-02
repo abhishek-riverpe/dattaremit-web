@@ -8,6 +8,7 @@ import type {
   UpdateUserPayload,
   CreateAddressPayload,
   UpdateAddressPayload,
+  OnboardingAddressPayload,
   ZynkKycData,
   PlaidLinkToken,
   AddExternalAccountPayload,
@@ -102,6 +103,19 @@ export const updateAddress = (
 
 export const deleteAddress = (id: string): Promise<void> =>
   api.delete(`/addresses/${id}`);
+
+// ── Referral ──
+export const validateReferralCode = (
+  code: string
+): Promise<{ valid: boolean }> => api.post("/referral/validate", { code });
+
+// ── Onboarding ──
+export const submitOnboardingAddress = (
+  data: OnboardingAddressPayload
+): Promise<void> => api.post("/onboarding/address", data);
+
+export const requestOnboardingKyc = (): Promise<{ message: string }> =>
+  api.post("/onboarding/kyc");
 
 // ── Zynk (KYC) ──
 export const createZynkEntity = (idempotencyKey?: string): Promise<User> =>

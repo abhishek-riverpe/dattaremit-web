@@ -21,6 +21,8 @@ function isTabActive(tabHref: string, pathname: string) {
   return tabHref === "/" ? pathname === "/" : pathname.startsWith(tabHref);
 }
 
+const onboardingPages = ["/referral", "/edit-profile", "/edit-addresses", "/kyc"];
+
 export default function DashboardLayout({
   children,
 }: {
@@ -50,10 +52,16 @@ export default function DashboardLayout({
         !account.user.phoneNumber ||
         !account.user.dateOfBirth);
 
-    const onboardingPages = ["/edit-profile", "/edit-addresses", "/submit-profile", "/kyc"];
+    // No user in DB → redirect to referral
+    if (noProfile) {
+      if (pathname !== "/referral" && pathname !== "/edit-profile") {
+        router.replace("/referral");
+      }
+      return;
+    }
 
-    // If no user in DB or missing required profile fields, redirect to edit-profile
-    if (noProfile || needsProfileInfo) {
+    // User exists but missing required profile fields → redirect to edit-profile
+    if (needsProfileInfo) {
       if (pathname !== "/edit-profile") {
         router.replace("/edit-profile");
       }
@@ -66,15 +74,23 @@ export default function DashboardLayout({
       return;
     }
 
-    // If profile is complete but account not yet submitted, redirect to submit-profile
+    // User complete, no addresses → redirect to edit-addresses
     const hasAddresses = (account?.addresses?.length ?? 0) > 0;
+    if (account?.user && !hasAddresses && !onboardingPages.includes(pathname)) {
+      router.replace("/edit-addresses");
+      return;
+    }
+
+    // User + addresses, status INITIAL or REJECTED → redirect to KYC
+    const status = account?.accountStatus;
     if (
-      account?.accountStatus === "INITIAL" &&
       account?.user &&
       hasAddresses &&
+      (status === "INITIAL" || status === "REJECTED") &&
       !onboardingPages.includes(pathname)
     ) {
-      router.replace("/submit-profile");
+      router.replace("/kyc");
+      return;
     }
   }, [isLoaded, isSignedIn, accountLoading, error, account, pathname, router]);
 
@@ -82,7 +98,6 @@ export default function DashboardLayout({
     return null;
   }
 
-  // Show nothing while redirecting to edit-profile or edit-addresses
   if (accountLoading) {
     return null;
   }
@@ -95,9 +110,11 @@ export default function DashboardLayout({
       !account.user.phoneNumber ||
       !account.user.dateOfBirth);
 
-  const onboardingPages = ["/edit-profile", "/edit-addresses", "/submit-profile", "/kyc"];
+  if (noProfile && pathname !== "/referral" && pathname !== "/edit-profile") {
+    return null;
+  }
 
-  if ((noProfile || needsProfileInfo) && pathname !== "/edit-profile") {
+  if (needsProfileInfo && pathname !== "/edit-profile") {
     return null;
   }
 
@@ -107,9 +124,18 @@ export default function DashboardLayout({
 
   const hasAddresses = (account?.addresses?.length ?? 0) > 0;
   if (
-    account?.accountStatus === "INITIAL" &&
+    account?.user &&
+    !hasAddresses &&
+    !onboardingPages.includes(pathname)
+  ) {
+    return null;
+  }
+
+  const status = account?.accountStatus;
+  if (
     account?.user &&
     hasAddresses &&
+    (status === "INITIAL" || status === "REJECTED") &&
     !onboardingPages.includes(pathname)
   ) {
     return null;

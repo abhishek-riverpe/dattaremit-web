@@ -1,7 +1,9 @@
 "use client";
 
-import { useStartKyc } from "@/hooks/api";
-import { Loader2, ExternalLink, ShieldCheck } from "lucide-react";
+import { useMutation } from "@tanstack/react-query";
+import { requestOnboardingKyc } from "@/services/api";
+import { useRouter } from "next/navigation";
+import { Loader2, ShieldCheck, Mail } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -12,8 +14,11 @@ import {
 import { Button } from "@/components/ui/button";
 
 export default function KycPage() {
-  const kycMutation = useStartKyc();
-  const kycData = kycMutation.data;
+  const router = useRouter();
+
+  const kycMutation = useMutation({
+    mutationFn: requestOnboardingKyc,
+  });
 
   return (
     <Card>
@@ -24,11 +29,12 @@ export default function KycPage() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {!kycData ? (
+        {!kycMutation.isSuccess ? (
           <div className="flex flex-col items-center gap-4 py-8">
             <ShieldCheck className="h-16 w-16 text-muted-foreground" />
             <p className="text-center text-sm text-muted-foreground">
               Click the button below to start the identity verification process.
+              A KYC link will be sent to your email.
             </p>
             {kycMutation.isError && (
               <p className="text-center text-sm text-destructive">
@@ -50,37 +56,18 @@ export default function KycPage() {
           </div>
         ) : (
           <div className="flex flex-col items-center gap-4 py-8">
-            <ShieldCheck className="h-16 w-16 text-green-500" />
+            <Mail className="h-16 w-16 text-green-500" />
+            <h3 className="text-lg font-semibold">KYC Link Sent!</h3>
             <p className="text-center text-sm text-muted-foreground">
-              Your verification link is ready.{" "}
-              {kycData.tosLink
-                ? "Please review the Terms of Service first, then complete KYC."
-                : "Please complete the KYC process."}
+              A KYC verification link has been sent to your email. Please check
+              your inbox and complete the verification process.
             </p>
-            <div className="flex w-full max-w-xs flex-col gap-3">
-              {kycData.tosLink && (
-                <Button asChild variant="outline" className="w-full">
-                  <a
-                    href={kycData.tosLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Review Terms of Service
-                    <ExternalLink className="ml-2 h-4 w-4" />
-                  </a>
-                </Button>
-              )}
-              <Button asChild className="w-full">
-                <a
-                  href={kycData.kycLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Complete KYC
-                  <ExternalLink className="ml-2 h-4 w-4" />
-                </a>
-              </Button>
-            </div>
+            <Button
+              className="w-full max-w-xs"
+              onClick={() => router.replace("/")}
+            >
+              Go to Home
+            </Button>
           </div>
         )}
       </CardContent>

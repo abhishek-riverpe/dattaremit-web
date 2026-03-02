@@ -49,6 +49,8 @@ export interface CreateUserPayload {
   phoneNumberPrefix: string;
   phoneNumber: string;
   dateOfBirth: string;
+  nationality?: string;
+  referredByCode?: string;
 }
 
 export interface UpdateUserPayload {
@@ -58,6 +60,16 @@ export interface UpdateUserPayload {
   phoneNumberPrefix?: string;
   phoneNumber?: string;
   dateOfBirth?: string;
+  nationality?: string;
+}
+
+export interface OnboardingAddressPayload {
+  type: AddressType;
+  addressLine1: string;
+  city: string;
+  state: string;
+  country: string;
+  postalCode: string;
 }
 
 export interface CreateAddressPayload {

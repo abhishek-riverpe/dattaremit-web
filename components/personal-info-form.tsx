@@ -40,6 +40,7 @@ import {
 } from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PhoneInput } from "@/components/phone-input";
+import { CountrySelector } from "@/components/country-selector";
 import { cn } from "@/lib/utils";
 
 export function PersonalInfoForm() {
@@ -60,9 +61,10 @@ export function PersonalInfoForm() {
     defaultValues: {
       firstName: "",
       lastName: "",
-      phoneNumberPrefix: "+880",
+      phoneNumberPrefix: "+1",
       phoneNumber: "",
       dateOfBirth: "",
+      nationality: "",
     },
   });
 
@@ -81,6 +83,7 @@ export function PersonalInfoForm() {
       dateOfBirth: u.dateOfBirth
         ? u.dateOfBirth.substring(0, 10)
         : "",
+      nationality: (u as Record<string, unknown>).nationality as string || "",
     });
   }, [account, form]);
 
@@ -93,8 +96,11 @@ export function PersonalInfoForm() {
           phoneNumberPrefix: data.phoneNumberPrefix,
           phoneNumber: data.phoneNumber,
           dateOfBirth: data.dateOfBirth,
+          nationality: data.nationality,
         });
       } else {
+        const referralCode = localStorage.getItem("referral_code") || undefined;
+
         await createUserMutation.mutateAsync({
           clerkUserId: clerkUser?.id || "",
           firstName: data.firstName,
@@ -105,7 +111,11 @@ export function PersonalInfoForm() {
           phoneNumberPrefix: data.phoneNumberPrefix,
           phoneNumber: data.phoneNumber,
           dateOfBirth: data.dateOfBirth,
+          nationality: data.nationality,
+          referredByCode: referralCode,
         });
+
+        localStorage.removeItem("referral_code");
       }
 
       if (!isExistingUser) {
@@ -268,6 +278,22 @@ export function PersonalInfoForm() {
                     </PopoverContent>
                   </Popover>
                   <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="nationality"
+              render={({ field }) => (
+                <FormItem>
+                  <CountrySelector
+                    label="Nationality"
+                    value={field.value}
+                    onSelect={field.onChange}
+                    placeholder="Select nationality"
+                    error={form.formState.errors.nationality?.message}
+                  />
                 </FormItem>
               )}
             />
