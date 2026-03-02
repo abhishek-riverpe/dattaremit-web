@@ -51,7 +51,7 @@ export default function ReceiveBankPage() {
       accountHolderName: "",
       bankName: "",
       branchName: "",
-      bankAccountType: "",
+      bankAccountType: undefined,
       phoneNumber: "",
     },
   });
