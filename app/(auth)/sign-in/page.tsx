@@ -8,19 +8,13 @@ import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { signInSchema, type SignInFormData } from "@/schemas/auth.schema";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
 import { getClerkErrorMessage } from "@/utils/clerk-error";
-import { AuthPageHeader } from "@/components/auth-page-header";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+
+import { AuthShell } from "@/components/ui/auth-shell";
+import { Form } from "@/components/ui/form";
+import { TextField } from "@/components/ui/text-field";
 import { Button } from "@/components/ui/button";
+import { OtpForm } from "@/components/ui/otp-form";
 import { OAuthButtons } from "@/components/oauth-buttons";
 import { OrDivider } from "@/components/or-divider";
 
@@ -30,6 +24,7 @@ export default function SignInPage() {
   const [loading, setLoading] = useState(false);
   const [pendingSecondFactor, setPendingSecondFactor] = useState(false);
   const [code, setCode] = useState("");
+  const [otpError, setOtpError] = useState<string | undefined>();
 
   const form = useForm<SignInFormData>({
     resolver: yupResolver(signInSchema),
@@ -41,9 +36,7 @@ export default function SignInPage() {
     setLoading(true);
 
     try {
-      const signInAttempt = await signIn.create({
-        identifier: data.email,
-      });
+      const signInAttempt = await signIn.create({ identifier: data.email });
 
       if (signInAttempt.status === "complete") {
         await setActive({ session: signInAttempt.createdSessionId });
@@ -72,7 +65,9 @@ export default function SignInPage() {
 
       toast.error("Sign in could not be completed.");
     } catch (err: unknown) {
-      toast.error(getClerkErrorMessage(err, "Sign in failed. Please try again."));
+      toast.error(
+        getClerkErrorMessage(err, "Sign in failed. Please try again."),
+      );
     } finally {
       setLoading(false);
     }
@@ -80,6 +75,7 @@ export default function SignInPage() {
 
   const onVerifySecondFactor = async () => {
     if (!isLoaded) return;
+    setOtpError(undefined);
     setLoading(true);
 
     try {
@@ -93,7 +89,7 @@ export default function SignInPage() {
         router.replace("/");
       }
     } catch (err: unknown) {
-      toast.error(
+      setOtpError(
         getClerkErrorMessage(err, "Verification failed. Please try again."),
       );
     } finally {
@@ -103,98 +99,88 @@ export default function SignInPage() {
 
   if (pendingSecondFactor) {
     return (
-      <div>
-        <AuthPageHeader
-          title="Check your email"
-          subtitle="Enter the verification code sent to your email"
+      <AuthShell
+        eyebrow="Two-step"
+        title={
+          <>
+            One more
+            <br />
+            <span className="text-brand">step</span>.
+          </>
+        }
+        subtitle="Enter the 6-digit code we just emailed you."
+      >
+        <OtpForm
+          value={code}
+          onChange={(v) => {
+            setCode(v);
+            if (otpError) setOtpError(undefined);
+          }}
+          onSubmit={onVerifySecondFactor}
+          loading={loading}
+          error={otpError}
+          submitLabel="Verify and sign in"
         />
-        <div className="space-y-4">
-          <Input
-            type="text"
-            inputMode="numeric"
-            placeholder="Enter 6-digit code"
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-            maxLength={6}
-            autoFocus
-          />
-          <Button
-            className="w-full"
-            size="lg"
-            disabled={loading || code.length < 6}
-            onClick={onVerifySecondFactor}
-          >
-            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Verify
-          </Button>
-        </div>
-      </div>
+      </AuthShell>
     );
   }
 
   return (
-    <div>
-      <AuthPageHeader title="Welcome back" subtitle="Sign in to your account" />
-      <div>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="email"
-                      placeholder="you@example.com"
-                      autoComplete="email"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Password</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="password"
-                      placeholder="Enter your password"
-                      autoComplete="current-password"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <Button type="submit" className="w-full" size="lg" disabled={loading}>
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Sign In
-            </Button>
-          </form>
-        </Form>
-
-        <OrDivider />
-
-        <OAuthButtons mode="sign-in" />
-
-        <p className="mt-6 text-center text-sm text-muted-foreground">
-          Don&apos;t have an account?{" "}
+    <AuthShell
+      eyebrow="Sign in"
+      title={
+        <>
+          Welcome
+          <br />
+          <span className="text-brand">back</span>.
+        </>
+      }
+      subtitle="Sign in to send, track, and manage your transfers."
+      footer={
+        <span>
+          New here?{" "}
           <Link
             href="/sign-up"
-            className="font-semibold text-primary hover:underline"
+            className="font-semibold text-foreground underline decoration-brand decoration-2 underline-offset-4 hover:decoration-foreground"
           >
-            Sign up
+            Create an account
           </Link>
-        </p>
-      </div>
-    </div>
+        </span>
+      }
+    >
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <TextField
+            control={form.control}
+            name="email"
+            label="Email"
+            type="email"
+            placeholder="you@example.com"
+            autoComplete="email"
+          />
+          <TextField
+            control={form.control}
+            name="password"
+            label="Password"
+            type="password"
+            placeholder="Enter your password"
+            autoComplete="current-password"
+          />
+          <Button
+            type="submit"
+            variant="brand"
+            size="lg"
+            className="w-full"
+            loading={loading}
+          >
+            Sign in
+          </Button>
+        </form>
+      </Form>
+
+      <OrDivider />
+
+      <OAuthButtons mode="sign-in" />
+    </AuthShell>
   );
 }

@@ -11,11 +11,14 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PageHeader } from "@/components/ui/page-header";
+import { EmptyState } from "@/components/ui/empty-state";
 import { useActivities } from "@/hooks/api";
+import { cn } from "@/lib/utils";
 import type { ActivityType, ActivityQueryParams } from "@/types/api";
 
 const PAGE_SIZE = 20;
@@ -46,10 +49,7 @@ const KYC_TYPES: ActivityType[] = [
   "KYC_FAILED",
 ];
 
-const ACCOUNT_TYPES: ActivityType[] = [
-  "ACCOUNT_APPROVED",
-  "ACCOUNT_ACTIVATED",
-];
+const ACCOUNT_TYPES: ActivityType[] = ["ACCOUNT_APPROVED", "ACCOUNT_ACTIVATED"];
 
 function getActivityIcon(type: ActivityType) {
   if (["DEPOSIT", "REFUND"].includes(type)) return ArrowDownLeft;
@@ -60,8 +60,17 @@ function getActivityIcon(type: ActivityType) {
   return Clock3;
 }
 
+function getIconAccent(type: ActivityType) {
+  if (["DEPOSIT", "REFUND"].includes(type))
+    return "bg-success/15 text-success";
+  if (["WITHDRAWAL", "TRANSFER", "PAYMENT"].includes(type))
+    return "bg-brand/15 text-brand";
+  if (type.startsWith("KYC_")) return "bg-accent text-foreground";
+  return "bg-muted text-muted-foreground";
+}
+
 function getStatusVariant(
-  status: string
+  status: string,
 ): "default" | "secondary" | "destructive" | "outline" {
   switch (status) {
     case "COMPLETE":
@@ -86,11 +95,7 @@ export default function ActivityPage() {
   const [activeTab, setActiveTab] = useState<FilterTab>("all");
   const [offset, setOffset] = useState(0);
 
-  const params: ActivityQueryParams = {
-    limit: PAGE_SIZE,
-    offset,
-  };
-
+  const params: ActivityQueryParams = { limit: PAGE_SIZE, offset };
   const { data, isLoading } = useActivities(params);
 
   const filteredItems = (() => {
@@ -108,107 +113,123 @@ export default function ActivityPage() {
   const totalPages = data ? Math.ceil(data.total / PAGE_SIZE) : 0;
   const currentPage = Math.floor(offset / PAGE_SIZE) + 1;
 
-  if (isLoading) {
-    return (
-      <div className="space-y-4">
-        <Skeleton className="h-8 w-48" />
-        <div className="flex gap-2">
-          {FILTER_TABS.map((t) => (
-            <Skeleton key={t.key} className="h-9 w-20" />
+  return (
+    <div className="space-y-8">
+      <PageHeader
+        eyebrow="Activity"
+        title={
+          <>
+            Your{" "}
+            <span className="text-brand">
+              ledger
+            </span>
+            .
+          </>
+        }
+        subtitle="Every transfer, KYC update, and account event in one place."
+      />
+
+      <div className="flex flex-wrap items-center gap-2">
+        {FILTER_TABS.map((tab) => {
+          const active = activeTab === tab.key;
+          return (
+            <button
+              key={tab.key}
+              onClick={() => {
+                setActiveTab(tab.key);
+                setOffset(0);
+              }}
+              className={cn(
+                "rounded-full border px-4 py-1.5 text-sm font-medium transition-all",
+                active
+                  ? "border-foreground/20 bg-foreground text-background shadow-soft"
+                  : "border-border bg-card text-muted-foreground hover:border-foreground/20 hover:text-foreground",
+              )}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {isLoading && (
+        <div className="space-y-2">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className="h-16 w-full rounded-2xl" />
           ))}
         </div>
-        {Array.from({ length: 5 }).map((_, i) => (
-          <Skeleton key={i} className="h-16 w-full" />
-        ))}
-      </div>
-    );
-  }
+      )}
 
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Activity</h1>
-        <p className="text-muted-foreground">Your transaction history.</p>
-      </div>
+      {!isLoading && !filteredItems.length && (
+        <EmptyState
+          icon={<Clock3 className="size-5" />}
+          title="Nothing yet"
+          description="When you send or receive money, it'll show up here."
+        />
+      )}
 
-      <div className="flex gap-2">
-        {FILTER_TABS.map((tab) => (
-          <Button
-            key={tab.key}
-            variant={activeTab === tab.key ? "default" : "outline"}
-            size="sm"
-            onClick={() => {
-              setActiveTab(tab.key);
-              setOffset(0);
-            }}
-          >
-            {tab.label}
-          </Button>
-        ))}
-      </div>
-
-      {!filteredItems.length ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <Clock3 className="mb-4 h-12 w-12 text-muted-foreground" />
-            <h2 className="text-lg font-semibold">No activity yet</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Your transaction history will appear here.
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-2">
-          {filteredItems.map((activity) => {
+      {!isLoading && filteredItems.length > 0 && (
+        <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-soft">
+          {filteredItems.map((activity, i) => {
             const Icon = getActivityIcon(activity.type);
+            const accent = getIconAccent(activity.type);
             return (
-              <Card key={activity.id}>
-                <CardContent className="flex items-center gap-3 py-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted">
-                    <Icon className="h-5 w-5 text-muted-foreground" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium">
-                        {activity.description || formatType(activity.type)}
-                      </p>
-                      <Badge
-                        variant={getStatusVariant(activity.status)}
-                        className="text-xs"
-                      >
-                        {activity.status.toLowerCase()}
-                      </Badge>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      {formatDistanceToNow(new Date(activity.created_at), {
-                        addSuffix: true,
-                      })}
-                    </p>
-                  </div>
-                  {activity.amount != null && (
-                    <p className="text-sm font-semibold tabular-nums">
-                      ${Number(activity.amount).toFixed(2)}
-                    </p>
+              <div
+                key={activity.id}
+                className={cn(
+                  "flex items-center gap-4 px-5 py-4 transition-colors hover:bg-accent/40",
+                  i > 0 && "border-t border-border",
+                )}
+              >
+                <div
+                  className={cn(
+                    "flex size-10 shrink-0 items-center justify-center rounded-full",
+                    accent,
                   )}
-                </CardContent>
-              </Card>
+                >
+                  <Icon className="size-[18px]" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className="truncate text-sm font-medium text-foreground">
+                      {activity.description || formatType(activity.type)}
+                    </p>
+                    <Badge
+                      variant={getStatusVariant(activity.status)}
+                      className="text-[10px]"
+                    >
+                      {activity.status.toLowerCase()}
+                    </Badge>
+                  </div>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {formatDistanceToNow(new Date(activity.created_at), {
+                      addSuffix: true,
+                    })}
+                  </p>
+                </div>
+                {activity.amount != null && (
+                  <p className="font-semibold text-base tabular text-foreground">
+                    ${Number(activity.amount).toFixed(2)}
+                  </p>
+                )}
+              </div>
             );
           })}
         </div>
       )}
 
       {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2">
+        <div className="flex items-center justify-center gap-3">
           <Button
             variant="outline"
             size="sm"
             disabled={offset === 0}
             onClick={() => setOffset(Math.max(0, offset - PAGE_SIZE))}
           >
-            <ChevronLeft className="h-4 w-4" />
+            <ChevronLeft className="size-4" />
             Previous
           </Button>
-          <span className="text-sm text-muted-foreground">
+          <span className="text-sm text-muted-foreground tabular">
             Page {currentPage} of {totalPages}
           </span>
           <Button
@@ -218,7 +239,7 @@ export default function ActivityPage() {
             onClick={() => setOffset(offset + PAGE_SIZE)}
           >
             Next
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRight className="size-4" />
           </Button>
         </div>
       )}

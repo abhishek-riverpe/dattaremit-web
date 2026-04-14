@@ -2,7 +2,7 @@
 
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { Loader2 } from "lucide-react";
+
 import {
   recipientBankSchema,
   type RecipientBankFormData,
@@ -15,8 +15,8 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { TextField } from "@/components/ui/text-field";
 import {
   Select,
   SelectContent,
@@ -54,83 +54,34 @@ export function RecipientBankForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <FormField
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+        <TextField
           control={form.control}
           name="bankName"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Bank name</FormLabel>
-              <FormControl>
-                <Input placeholder="State Bank of India" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+          label="Bank name"
+          placeholder="State Bank of India"
         />
-
-        <FormField
+        <TextField
           control={form.control}
           name="accountName"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Account holder name</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+          label="Account holder name"
         />
-
         <div className="grid gap-3 sm:grid-cols-2">
-          <FormField
+          <TextField
             control={form.control}
             name="accountNumber"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Account number</FormLabel>
-                <FormControl>
-                  <Input inputMode="numeric" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+            label="Account number"
+            inputMode="numeric"
           />
-          <FormField
+          <TextField
             control={form.control}
             name="ifsc"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>IFSC</FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder="SBIN0001234"
-                    {...field}
-                    onChange={(e) =>
-                      field.onChange(e.target.value.toUpperCase())
-                    }
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+            label="IFSC"
+            placeholder="SBIN0001234"
+            transform={(v) => v.toUpperCase()}
           />
         </div>
-
-        <FormField
-          control={form.control}
-          name="branchName"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Branch</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <TextField control={form.control} name="branchName" label="Branch" />
 
         <div className="grid gap-3 sm:grid-cols-2">
           <FormField
@@ -154,23 +105,20 @@ export function RecipientBankForm({
               </FormItem>
             )}
           />
-          <FormField
+          <TextField
             control={form.control}
             name="phoneNumber"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Phone number</FormLabel>
-                <FormControl>
-                  <Input {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+            label="Phone number"
           />
         </div>
 
-        <Button type="submit" className="w-full" disabled={submitting}>
-          {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+        <Button
+          type="submit"
+          variant="brand"
+          size="lg"
+          className="w-full"
+          loading={submitting}
+        >
           {submitLabel}
         </Button>
       </form>

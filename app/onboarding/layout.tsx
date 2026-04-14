@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect } from "react";
-import { useAuth, UserButton } from "@clerk/nextjs";
+import { useAuth } from "@clerk/nextjs";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
-import { Loader2 } from "lucide-react";
+import Link from "next/link";
+import { motion, AnimatePresence } from "motion/react";
+
 import { useAccount } from "@/hooks/api";
 import { ApiError } from "@/services/api";
 import {
@@ -14,12 +16,25 @@ import {
   type OnboardingStepKey,
 } from "@/lib/onboarding-progress";
 import { StepIndicator } from "@/components/onboarding/step-indicator";
+import { AuroraBackground } from "@/components/ui/aurora-background";
+import { AccountMenu } from "@/components/account-menu";
 
 const STEP_FROM_PATH: Record<string, OnboardingStepKey> = {
   "/onboarding/profile": "profile",
   "/onboarding/address": "address",
   "/onboarding/kyc": "kyc",
 };
+
+function FullScreenLoader() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-background">
+      <div className="relative flex size-12 items-center justify-center">
+        <span className="absolute inset-0 animate-ping rounded-full bg-brand/30" />
+        <span className="relative size-2 rounded-full bg-brand" />
+      </div>
+    </div>
+  );
+}
 
 export default function OnboardingLayout({
   children,
@@ -34,17 +49,12 @@ export default function OnboardingLayout({
   const noProfile = error instanceof ApiError && error.status === 404;
   const state = computeOnboardingState(noProfile ? null : account);
 
-  // Auth gate
   useEffect(() => {
     if (isLoaded && !isSignedIn) {
       router.replace("/sign-in");
     }
   }, [isLoaded, isSignedIn, router]);
 
-  // Step routing.
-  //   - All steps done + URL doesn't match a step → bounce to dashboard.
-  //   - Incomplete step → block jumping AHEAD of nextStep, but allow user to
-  //     revisit any earlier step they have already completed (to update data).
   useEffect(() => {
     if (!isLoaded || !isSignedIn) return;
     if (isLoading) return;
@@ -83,29 +93,36 @@ export default function OnboardingLayout({
   const stepKey = STEP_FROM_PATH[pathname];
 
   if (!isLoaded || !isSignedIn || isLoading || !stepKey) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <FullScreenLoader />;
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-muted/30">
-      <header className="flex items-center justify-between border-b bg-background px-4 py-3 sm:px-6">
-        <div className="flex items-center gap-2">
-          <Image src="/logo.png" alt="Dattaremit" width={28} height={24} />
-          <span className="font-semibold">Dattaremit</span>
-        </div>
-        <UserButton afterSignOutUrl="/sign-in" />
+    <div className="relative flex min-h-screen flex-col bg-background">
+      <AuroraBackground variant="dashboard" />
+
+      <header className="relative z-10 flex h-16 items-center justify-between border-b border-border/60 bg-background/70 px-5 backdrop-blur-xl sm:px-8">
+        <Link href="/" className="flex items-center gap-2.5">
+          <Image src="/logo.png" alt="Dattapay" width={26} height={22} />
+          <span className="font-semibold text-lg text-foreground">Dattapay</span>
+        </Link>
+        <AccountMenu />
       </header>
 
-      <main className="flex flex-1 items-start justify-center px-4 py-8 sm:py-12">
-        <div className="w-full max-w-lg space-y-6">
+      <main className="relative z-10 flex flex-1 items-start justify-center px-5 py-10 sm:px-8 sm:py-16">
+        <div className="w-full max-w-xl space-y-7">
           <StepIndicator current={stepKey} completed={state.completion} />
-          <div className="rounded-2xl border bg-background p-6 shadow-sm sm:p-8">
-            {children}
-          </div>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={pathname}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.35, ease: [0.2, 0.8, 0.2, 1] }}
+              className="rounded-3xl border border-border bg-card/80 p-6 shadow-lift backdrop-blur-xl sm:p-8"
+            >
+              {children}
+            </motion.div>
+          </AnimatePresence>
         </div>
       </main>
     </div>

@@ -6,29 +6,27 @@ import { useMutation } from "@tanstack/react-query";
 import {
   CheckCircle2,
   Clock,
-  Loader2,
   Mail,
   RefreshCw,
   ShieldCheck,
   XCircle,
 } from "lucide-react";
+
 import { requestOnboardingKyc } from "@/services/api";
 import { useAccount } from "@/hooks/api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PageHeader } from "@/components/ui/page-header";
 
 const STATUS_META: Record<
   string,
-  { label: string; variant: "default" | "secondary" | "destructive"; icon: React.ComponentType<{ className?: string }> }
+  {
+    label: string;
+    variant: "default" | "secondary" | "destructive";
+    icon: React.ComponentType<{ className?: string }>;
+  }
 > = {
   INITIAL: { label: "Not started", variant: "secondary", icon: ShieldCheck },
   PENDING: { label: "In review", variant: "secondary", icon: Clock },
@@ -39,14 +37,13 @@ const STATUS_META: Record<
 export default function KycPage() {
   const router = useRouter();
   const { data: account, isLoading } = useAccount();
-
   const requestLink = useMutation({ mutationFn: requestOnboardingKyc });
 
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-40 w-full" />
+        <Skeleton className="h-12 w-72" />
+        <Skeleton className="h-40 w-full rounded-2xl" />
       </div>
     );
   }
@@ -58,43 +55,52 @@ export default function KycPage() {
   const canStartPrimary = status === "INITIAL" || status === "REJECTED";
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Identity verification</h1>
-        <p className="text-muted-foreground">
-          Verify your identity to activate your account and send money.
-        </p>
-      </div>
+    <div className="space-y-8">
+      <PageHeader
+        eyebrow="Verification"
+        title={
+          <>
+            Prove it&apos;s{" "}
+            <span className="text-brand">you</span>.
+          </>
+        }
+        subtitle="A quick check unlocks transfers across the network."
+      />
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <CardTitle className="text-base">Primary KYC</CardTitle>
-              <CardDescription>
-                Secure email-based verification through our partner.
-              </CardDescription>
+      <Card variant="elevated" className="overflow-hidden">
+        <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border p-6">
+          <div className="flex items-start gap-3">
+            <div className="flex size-10 items-center justify-center rounded-xl bg-brand/15 text-brand">
+              <ShieldCheck className="size-5" />
             </div>
-            <Badge variant={meta.variant} className="gap-1">
-              <StatusIcon className="h-3 w-3" />
-              {meta.label}
-            </Badge>
+            <div>
+              <h2 className="font-semibold text-xl text-foreground">
+                Primary KYC
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Email-based verification through our partner.
+              </p>
+            </div>
           </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
+          <Badge variant={meta.variant} className="gap-1">
+            <StatusIcon className="size-3" />
+            {meta.label}
+          </Badge>
+        </div>
+        <div className="space-y-4 p-6">
           {requestLink.isSuccess ? (
             <div className="flex flex-col items-center gap-3 py-4 text-center">
-              <Mail className="h-10 w-10 text-green-600" />
-              <p className="text-sm">
-                We sent a verification link to your email. Check your inbox to
-                complete KYC.
+              <div className="flex size-12 items-center justify-center rounded-full bg-success/15 text-success">
+                <Mail className="size-5" />
+              </div>
+              <p className="text-sm text-foreground">
+                We sent a verification link to your email.
               </p>
               <Button
                 variant="outline"
                 onClick={() => requestLink.reset()}
-                className="gap-2"
               >
-                <RefreshCw className="h-4 w-4" />
+                <RefreshCw className="size-4" />
                 Resend link
               </Button>
             </div>
@@ -124,51 +130,54 @@ export default function KycPage() {
               <div className="flex gap-2">
                 {canStartPrimary && (
                   <Button
+                    variant="brand"
                     onClick={() => requestLink.mutate()}
-                    disabled={requestLink.isPending}
+                    loading={requestLink.isPending}
                   >
-                    {requestLink.isPending && (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    )}
                     Send verification link
                   </Button>
                 )}
                 {status === "ACTIVE" && (
-                  <Button onClick={() => router.push("/")}>Go to home</Button>
+                  <Button variant="brand" onClick={() => router.push("/")}>
+                    Go to home
+                  </Button>
                 )}
               </div>
             </>
           )}
-        </CardContent>
+        </div>
       </Card>
 
-      <Separator />
-
-      <Card>
-        <CardHeader>
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <CardTitle className="text-base">Indian KYC</CardTitle>
-              <CardDescription>
-                Required to receive money into an Indian bank account.
-              </CardDescription>
+      <Card variant="elevated" className="overflow-hidden">
+        <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border p-6">
+          <div className="flex items-start gap-3">
+            <div className="flex size-10 items-center justify-center rounded-xl bg-brand/15 text-brand">
+              <ShieldCheck className="size-5" />
             </div>
-            <Badge
-              variant={
-                indianStatus === "APPROVED"
-                  ? "default"
-                  : indianStatus === "PENDING"
-                    ? "secondary"
-                    : indianStatus === "REJECTED" || indianStatus === "FAILED"
-                      ? "destructive"
-                      : "outline"
-              }
-            >
-              {indianStatus}
-            </Badge>
+            <div>
+              <h2 className="font-semibold text-xl text-foreground">
+                Indian KYC
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Required to receive money into an Indian bank account.
+              </p>
+            </div>
           </div>
-        </CardHeader>
-        <CardContent>
+          <Badge
+            variant={
+              indianStatus === "APPROVED"
+                ? "default"
+                : indianStatus === "PENDING"
+                  ? "secondary"
+                  : indianStatus === "REJECTED" || indianStatus === "FAILED"
+                    ? "destructive"
+                    : "outline"
+            }
+          >
+            {indianStatus}
+          </Badge>
+        </div>
+        <div className="p-6">
           {indianStatus === "PENDING" ? (
             <p className="text-sm text-muted-foreground">
               Your Indian KYC is being processed. This typically takes 3–5
@@ -179,12 +188,12 @@ export default function KycPage() {
               Indian KYC verified — you can add an Indian bank account.
             </p>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                Submit your Aadhar and PAN to verify your Indian identity.
-                Data is encrypted in your browser before being sent.
+                Submit your Aadhar and PAN to verify your Indian identity. Data
+                is encrypted in your browser before being sent.
               </p>
-              <Button asChild>
+              <Button asChild variant="brand">
                 <Link href="/kyc/indian">
                   {indianStatus === "REJECTED" || indianStatus === "FAILED"
                     ? "Resubmit Indian KYC"
@@ -193,7 +202,7 @@ export default function KycPage() {
               </Button>
             </div>
           )}
-        </CardContent>
+        </div>
       </Card>
     </div>
   );

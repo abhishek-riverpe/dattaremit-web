@@ -5,7 +5,9 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useForm, type Resolver } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { ArrowLeft, Loader2, Send } from "lucide-react";
+import { ArrowLeft, Send, UserPlus } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
+
 import {
   transferAmountSchema,
   type TransferAmountFormData,
@@ -13,29 +15,20 @@ import {
 import { useRecipients, useSendMoney } from "@/hooks/api";
 import { generateIdempotencyKey } from "@/lib/idempotency";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
+import { Form } from "@/components/ui/form";
+import { TextField } from "@/components/ui/text-field";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PageHeader } from "@/components/ui/page-header";
+import { EmptyState } from "@/components/ui/empty-state";
 import { RecipientCard } from "@/components/recipients/recipient-card";
 import { TransferResult } from "@/components/transfer/transfer-result";
 import { useStepUp } from "@/hooks/use-step-up";
 import type { Recipient } from "@/types/recipient";
 
 type Step = "select" | "amount" | "review" | "result";
+
+const STEP_ORDER: Step[] = ["select", "amount", "review", "result"];
 
 export default function SendPage() {
   const search = useSearchParams();
@@ -67,13 +60,15 @@ export default function SendPage() {
   );
 
   const form = useForm<TransferAmountFormData>({
-    resolver: yupResolver(transferAmountSchema) as unknown as Resolver<TransferAmountFormData>,
+    resolver: yupResolver(
+      transferAmountSchema,
+    ) as unknown as Resolver<TransferAmountFormData>,
     defaultValues: { amount: "", note: "" },
   });
 
   if (step === "result") {
     return (
-      <div className="mx-auto max-w-lg space-y-6">
+      <div className="mx-auto w-full max-w-lg">
         {stepUpElement}
         <TransferResult
           status={sendError ? "error" : "success"}
@@ -94,195 +89,289 @@ export default function SendPage() {
     );
   }
 
+  const stepIndex = STEP_ORDER.indexOf(step);
+
   return (
-    <div className="mx-auto max-w-lg space-y-6">
+    <div className="mx-auto flex w-full max-w-2xl flex-col gap-8">
       {stepUpElement}
-      <div className="flex items-center gap-2">
-        {step === "select" ? (
-          <Button variant="ghost" size="sm" asChild className="-ml-2">
+
+      <div className="flex items-center justify-between gap-3">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="-ml-2"
+          asChild={step === "select"}
+          onClick={
+            step === "select"
+              ? undefined
+              : () => setStep(step === "review" ? "amount" : "select")
+          }
+        >
+          {step === "select" ? (
             <Link href="/">
               <ArrowLeft />
-              Back
+              Home
             </Link>
-          </Button>
-        ) : (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="-ml-2"
-            onClick={() =>
-              setStep(step === "review" ? "amount" : selectedId && preselectedId ? "select" : "select")
-            }
-          >
-            <ArrowLeft />
-            Back
-          </Button>
-        )}
+          ) : (
+            <>
+              <ArrowLeft />
+              Back
+            </>
+          )}
+        </Button>
+        <div className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+          {(["select", "amount", "review"] as const).map((s, i) => {
+            const isActive = STEP_ORDER.indexOf(s) === stepIndex;
+            const isDone = STEP_ORDER.indexOf(s) < stepIndex;
+            return (
+              <div key={s} className="flex items-center gap-1.5">
+                {i > 0 && <div className="h-px w-4 bg-border" />}
+                <span
+                  className={
+                    isActive
+                      ? "text-foreground"
+                      : isDone
+                        ? "text-brand"
+                        : "text-muted-foreground/50"
+                  }
+                >
+                  {i + 1}
+                </span>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
-      {step === "select" && (
-        <>
-          <div>
-            <h1 className="text-2xl font-bold">Send money</h1>
-            <p className="text-muted-foreground">Pick a recipient.</p>
-          </div>
+      <AnimatePresence mode="wait">
+        {step === "select" && (
+          <motion.div
+            key="select"
+            initial={{ opacity: 0, x: -12 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 12 }}
+            transition={{ duration: 0.3, ease: [0.2, 0.8, 0.2, 1] }}
+            className="space-y-6"
+          >
+            <PageHeader
+              eyebrow="Step 1"
+              title={
+                <>
+                  Who&apos;s it{" "}
+                  <span className="text-brand">
+                    going to
+                  </span>
+                  ?
+                </>
+              }
+              subtitle="Pick a verified recipient. They&apos;ll receive funds in their linked bank."
+            />
 
-          {isLoading && (
-            <div className="space-y-3">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <Skeleton key={i} className="h-20 w-full" />
-              ))}
-            </div>
-          )}
+            {isLoading && (
+              <div className="space-y-3">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <Skeleton key={i} className="h-20 w-full" />
+                ))}
+              </div>
+            )}
 
-          {!isLoading && (!eligible || eligible.length === 0) && (
-            <Card>
-              <CardContent className="py-10 text-center">
-                <p className="mb-3 text-muted-foreground">
-                  No recipients are ready to receive money yet. Add one and
-                  complete their bank details.
-                </p>
-                <Button asChild>
-                  <Link href="/recipients/new">Add recipient</Link>
-                </Button>
-              </CardContent>
+            {!isLoading && (!eligible || eligible.length === 0) && (
+              <EmptyState
+                icon={<UserPlus className="size-5" />}
+                title="No one ready yet"
+                description="Add a recipient and complete their bank details before you can send."
+                action={
+                  <Button asChild variant="brand">
+                    <Link href="/recipients/new">Add recipient</Link>
+                  </Button>
+                }
+              />
+            )}
+
+            {eligible && eligible.length > 0 && (
+              <div className="space-y-3">
+                {eligible.map((r) => (
+                  <button
+                    key={r.id}
+                    className="block w-full text-left"
+                    onClick={() => {
+                      setSelectedId(r.id);
+                      setStep("amount");
+                    }}
+                  >
+                    <RecipientCard recipient={r} />
+                  </button>
+                ))}
+              </div>
+            )}
+          </motion.div>
+        )}
+
+        {step === "amount" && selected && (
+          <motion.div
+            key="amount"
+            initial={{ opacity: 0, x: -12 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 12 }}
+            transition={{ duration: 0.3, ease: [0.2, 0.8, 0.2, 1] }}
+            className="space-y-6"
+          >
+            <PageHeader
+              eyebrow="Step 2"
+              title={
+                <>
+                  How much for{" "}
+                  <span className="text-brand">
+                    {selected.firstName}
+                  </span>
+                  ?
+                </>
+              }
+              subtitle={`Funds will arrive in ${selected.bankName ?? "their linked account"}.`}
+            />
+
+            <Card variant="elevated" className="p-6 sm:p-8">
+              <Form {...form}>
+                <form
+                  className="space-y-6"
+                  onSubmit={form.handleSubmit((data) => {
+                    setAmount(data.amount);
+                    setNote(data.note ?? "");
+                    setStep("review");
+                  })}
+                >
+                  <TextField
+                    control={form.control}
+                    name="amount"
+                    label="Amount"
+                    inputMode="decimal"
+                    placeholder="100.00"
+                    leading={
+                      <span className="font-semibold text-base text-muted-foreground">
+                        $
+                      </span>
+                    }
+                    inputClassName="font-semibold text-2xl h-14 tabular pl-9"
+                  />
+                  <TextField
+                    control={form.control}
+                    name="note"
+                    label="Note"
+                    placeholder="Birthday gift"
+                    description="Recipients see this on their statement."
+                  />
+                  <Button
+                    type="submit"
+                    variant="brand"
+                    size="lg"
+                    className="w-full"
+                  >
+                    Continue
+                  </Button>
+                </form>
+              </Form>
             </Card>
-          )}
+          </motion.div>
+        )}
 
-          {eligible && eligible.length > 0 && (
-            <div className="space-y-3">
-              {eligible.map((r) => (
-                <button
-                  key={r.id}
-                  className="block w-full text-left"
-                  onClick={() => {
-                    setSelectedId(r.id);
-                    setStep("amount");
+        {step === "review" && selected && (
+          <motion.div
+            key="review"
+            initial={{ opacity: 0, x: -12 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 12 }}
+            transition={{ duration: 0.3, ease: [0.2, 0.8, 0.2, 1] }}
+            className="space-y-6"
+          >
+            <PageHeader
+              eyebrow="Step 3"
+              title={
+                <>
+                  Confirm and{" "}
+                  <span className="text-brand">
+                    send
+                  </span>
+                  .
+                </>
+              }
+              subtitle="One last look. Once you confirm, the funds are on their way."
+            />
+
+            <Card variant="elevated" className="overflow-hidden">
+              <div className="relative border-b border-border bg-gradient-to-br from-brand-soft/30 via-card to-card p-7 text-center">
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute -top-12 left-1/2 size-48 -translate-x-1/2 rounded-full bg-brand/15 blur-3xl"
+                />
+                <p className="relative text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                  Sending
+                </p>
+                <p className="relative mt-2 font-semibold text-5xl leading-none tabular text-foreground sm:text-6xl">
+                  ${amount}
+                </p>
+                <p className="relative mt-2 text-sm text-muted-foreground">
+                  to{" "}
+                  <span className="font-medium text-foreground">
+                    {selected.firstName} {selected.lastName}
+                  </span>
+                </p>
+              </div>
+
+              <div className="space-y-3 p-6 text-sm">
+                <Row label="Bank">
+                  {selected.bankName} · {selected.bankAccountNumberMasked}
+                </Row>
+                <Row label="Recipient">{selected.email}</Row>
+                {note && <Row label="Note">{note}</Row>}
+                <Row label="Estimated arrival">
+                  <span className="text-brand">~60 seconds</span>
+                </Row>
+              </div>
+
+              <div className="border-t border-border p-6">
+                <Button
+                  variant="brand"
+                  size="lg"
+                  className="w-full"
+                  loading={sendMoney.isPending}
+                  onClick={async () => {
+                    setSendError(null);
+                    const res = await gate(async () => {
+                      const amountCents = Math.round(parseFloat(amount) * 100);
+                      try {
+                        return await sendMoney.mutateAsync({
+                          payload: {
+                            recipientId: selected.id,
+                            amountCents,
+                            note: note || undefined,
+                          },
+                          idempotencyKey,
+                        });
+                      } catch (err) {
+                        setSendError(
+                          err instanceof Error
+                            ? err.message
+                            : "Transfer failed",
+                        );
+                        return undefined;
+                      }
+                    });
+                    if (res) {
+                      setTransactionId(res.transactionId);
+                      setStep("result");
+                    } else if (sendError) {
+                      setStep("result");
+                    }
                   }}
                 >
-                  <RecipientCard recipient={r} />
-                </button>
-              ))}
-            </div>
-          )}
-        </>
-      )}
-
-      {step === "amount" && selected && (
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              Send to {selected.firstName} {selected.lastName}
-            </CardTitle>
-            <CardDescription>{selected.email}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Form {...form}>
-              <form
-                className="space-y-4"
-                onSubmit={form.handleSubmit((data) => {
-                  setAmount(data.amount);
-                  setNote(data.note ?? "");
-                  setStep("review");
-                })}
-              >
-                <FormField
-                  control={form.control}
-                  name="amount"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Amount (USD)</FormLabel>
-                      <FormControl>
-                        <Input
-                          inputMode="decimal"
-                          placeholder="100.00"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="note"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Note (optional)</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Birthday gift" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Button type="submit" className="w-full">
-                  Continue
+                  {!sendMoney.isPending && <Send />}
+                  Confirm and send
                 </Button>
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
-      )}
-
-      {step === "review" && selected && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Review transfer</CardTitle>
-            <CardDescription>
-              Double-check the details before sending.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4 text-sm">
-            <Row label="Recipient">
-              {selected.firstName} {selected.lastName}
-            </Row>
-            <Row label="Bank">
-              {selected.bankName} · {selected.bankAccountNumberMasked}
-            </Row>
-            <Row label="Amount">${amount}</Row>
-            {note && <Row label="Note">{note}</Row>}
-            <Button
-              className="w-full"
-              disabled={sendMoney.isPending}
-              onClick={async () => {
-                setSendError(null);
-                const res = await gate(async () => {
-                  const amountCents = Math.round(parseFloat(amount) * 100);
-                  try {
-                    return await sendMoney.mutateAsync({
-                      payload: {
-                        recipientId: selected.id,
-                        amountCents,
-                        note: note || undefined,
-                      },
-                      idempotencyKey,
-                    });
-                  } catch (err) {
-                    setSendError(
-                      err instanceof Error ? err.message : "Transfer failed",
-                    );
-                    return undefined;
-                  }
-                });
-                if (res) {
-                  setTransactionId(res.transactionId);
-                  setStep("result");
-                } else if (sendError) {
-                  setStep("result");
-                }
-              }}
-            >
-              {sendMoney.isPending ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Send />
-              )}
-              Confirm and send
-            </Button>
-          </CardContent>
-        </Card>
-      )}
+              </div>
+            </Card>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -295,9 +384,9 @@ function Row({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex items-start justify-between gap-3">
+    <div className="flex items-start justify-between gap-3 border-b border-dashed border-border/60 pb-3 last:border-0 last:pb-0">
       <span className="text-muted-foreground">{label}</span>
-      <span className="text-right font-medium">{children}</span>
+      <span className="text-right font-medium text-foreground">{children}</span>
     </div>
   );
 }

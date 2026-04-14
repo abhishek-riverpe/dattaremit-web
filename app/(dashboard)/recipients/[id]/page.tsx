@@ -1,29 +1,22 @@
 "use client";
 
 import { use } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  ArrowLeft,
   Banknote,
-  Loader2,
   Pencil,
   RefreshCw,
   Send,
 } from "lucide-react";
 import { toast } from "sonner";
+
 import { useRecipient, useResendRecipientKyc } from "@/hooks/api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { BackLink } from "@/components/ui/back-link";
 
 export default function RecipientDetailPage({
   params,
@@ -47,9 +40,10 @@ export default function RecipientDetailPage({
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <Skeleton className="h-8 w-40" />
-        <Skeleton className="h-40 w-full" />
-        <Skeleton className="h-32 w-full" />
+        <Skeleton className="h-5 w-24" />
+        <Skeleton className="h-12 w-72" />
+        <Skeleton className="h-40 w-full rounded-2xl" />
+        <Skeleton className="h-32 w-full rounded-2xl" />
       </div>
     );
   }
@@ -57,12 +51,7 @@ export default function RecipientDetailPage({
   if (error || !recipient) {
     return (
       <div className="space-y-4">
-        <Button variant="ghost" size="sm" asChild>
-          <Link href="/recipients">
-            <ArrowLeft />
-            Back
-          </Link>
-        </Button>
+        <BackLink href="/recipients" />
         <p className="text-destructive">
           {error instanceof Error ? error.message : "Recipient not found."}
         </p>
@@ -72,101 +61,116 @@ export default function RecipientDetailPage({
 
   const kycApproved = recipient.kycStatus === "APPROVED";
   const canSend = kycApproved && recipient.hasBankAccount;
+  const initials = `${recipient.firstName[0] ?? ""}${recipient.lastName[0] ?? ""}`;
 
   return (
-    <div className="space-y-6">
-      <Button variant="ghost" size="sm" asChild className="-ml-2 w-fit">
-        <Link href="/recipients">
-          <ArrowLeft />
-          Back
-        </Link>
-      </Button>
+    <div className="space-y-7">
+      <BackLink href="/recipients" />
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <CardTitle className="text-2xl">
-                {recipient.firstName} {recipient.lastName}
-              </CardTitle>
-              <CardDescription>{recipient.email}</CardDescription>
+      <Card
+        variant="elevated"
+        className="relative overflow-hidden p-6 sm:p-8"
+      >
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -top-16 -right-16 size-64 rounded-full bg-brand/10 blur-3xl"
+        />
+        <div className="relative flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex items-start gap-4">
+            <div className="flex size-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand/30 to-brand-soft/40 font-semibold text-xl text-foreground">
+              {initials}
             </div>
-            <Badge
-              variant={
-                kycApproved
-                  ? "default"
-                  : recipient.kycStatus === "PENDING"
-                    ? "secondary"
-                    : "destructive"
-              }
-            >
-              {recipient.kycStatus}
-            </Badge>
+            <div className="flex flex-col gap-1">
+              <h1 className="font-semibold text-3xl leading-tight text-foreground">
+                {recipient.firstName} {recipient.lastName}
+              </h1>
+              <p className="text-sm text-muted-foreground">{recipient.email}</p>
+            </div>
           </div>
-        </CardHeader>
-        <CardContent className="space-y-4 text-sm">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Detail label="Phone">
-              {recipient.phoneNumberPrefix} {recipient.phoneNumber}
-            </Detail>
-            <Detail label="Date of birth">{recipient.dateOfBirth}</Detail>
-            <Detail label="Nationality">{recipient.nationality}</Detail>
-          </div>
-          <Separator />
-          <Detail label="Address">
-            {recipient.addressLine1}
-            {recipient.addressLine2 ? `, ${recipient.addressLine2}` : ""}
-            <br />
-            {recipient.city}, {recipient.state} {recipient.postalCode}
-            <br />
-            {recipient.country}
+          <Badge
+            variant={
+              kycApproved
+                ? "default"
+                : recipient.kycStatus === "PENDING"
+                  ? "secondary"
+                  : "destructive"
+            }
+          >
+            {recipient.kycStatus}
+          </Badge>
+        </div>
+
+        <Separator className="my-6" />
+
+        <div className="grid gap-4 text-sm sm:grid-cols-2">
+          <Detail label="Phone">
+            {recipient.phoneNumberPrefix} {recipient.phoneNumber}
           </Detail>
-          <div className="flex flex-wrap gap-2 pt-2">
-            <Button variant="outline" size="sm" asChild>
-              <Link href={`/recipients/${recipient.id}/edit`}>
-                <Pencil />
-                Edit
-              </Link>
+          <Detail label="Date of birth">{recipient.dateOfBirth}</Detail>
+          <Detail label="Nationality">{recipient.nationality}</Detail>
+        </div>
+
+        <Separator className="my-6" />
+
+        <Detail label="Address">
+          {recipient.addressLine1}
+          {recipient.addressLine2 ? `, ${recipient.addressLine2}` : ""}
+          <br />
+          {recipient.city}, {recipient.state} {recipient.postalCode}
+          <br />
+          {recipient.country}
+        </Detail>
+
+        <div className="mt-6 flex flex-wrap gap-2">
+          <Button variant="outline" size="sm" asChild>
+            <a href={`/recipients/${recipient.id}/edit`}>
+              <Pencil />
+              Edit details
+            </a>
+          </Button>
+          {!kycApproved && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleResend}
+              loading={resendKyc.isPending}
+            >
+              {!resendKyc.isPending && <RefreshCw />}
+              Resend KYC
             </Button>
-            {!kycApproved && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleResend}
-                disabled={resendKyc.isPending}
-              >
-                {resendKyc.isPending ? (
-                  <Loader2 className="animate-spin" />
-                ) : (
-                  <RefreshCw />
-                )}
-                Resend KYC
-              </Button>
-            )}
-          </div>
-        </CardContent>
+          )}
+        </div>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Banknote className="h-4 w-4" />
-            Bank account
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3 text-sm">
+      <Card variant="elevated" className="overflow-hidden">
+        <div className="flex items-center gap-3 border-b border-border p-6">
+          <div className="flex size-10 items-center justify-center rounded-xl bg-brand/15 text-brand">
+            <Banknote className="size-5" />
+          </div>
+          <div>
+            <h2 className="font-semibold text-xl text-foreground">
+              Bank account
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Where funds are delivered.
+            </p>
+          </div>
+        </div>
+        <div className="space-y-4 p-6 text-sm">
           {recipient.hasBankAccount ? (
             <>
-              <Detail label="Bank">{recipient.bankName}</Detail>
-              <Detail label="Account">
-                {recipient.bankAccountNumberMasked}
-              </Detail>
-              <Detail label="IFSC">{recipient.bankIfsc}</Detail>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <Detail label="Bank">{recipient.bankName}</Detail>
+                <Detail label="Account">
+                  {recipient.bankAccountNumberMasked}
+                </Detail>
+                <Detail label="IFSC">{recipient.bankIfsc}</Detail>
+              </div>
               <Button variant="outline" size="sm" asChild>
-                <Link href={`/recipients/${recipient.id}/bank`}>
+                <a href={`/recipients/${recipient.id}/bank`}>
                   <Pencil />
                   Update bank
-                </Link>
+                </a>
               </Button>
             </>
           ) : (
@@ -174,31 +178,35 @@ export default function RecipientDetailPage({
               <p className="text-muted-foreground">
                 No bank account linked yet.
               </p>
-              <Button asChild size="sm">
-                <Link href={`/recipients/${recipient.id}/bank`}>
+              <Button variant="brand" size="sm" asChild>
+                <a href={`/recipients/${recipient.id}/bank`}>
                   Add bank account
-                </Link>
+                </a>
               </Button>
             </>
           )}
-        </CardContent>
+        </div>
       </Card>
 
-      <Button
-        className="w-full"
-        disabled={!canSend}
-        onClick={() => router.push(`/send?recipient=${recipient.id}`)}
-      >
-        <Send />
-        Send money
-      </Button>
-      {!canSend && (
-        <p className="-mt-3 text-center text-xs text-muted-foreground">
-          {kycApproved
-            ? "Add a bank account to send money."
-            : "Recipient must complete KYC before you can send money."}
-        </p>
-      )}
+      <div className="flex flex-col gap-2">
+        <Button
+          variant="brand"
+          size="lg"
+          className="w-full"
+          disabled={!canSend}
+          onClick={() => router.push(`/send?recipient=${recipient.id}`)}
+        >
+          <Send />
+          Send money
+        </Button>
+        {!canSend && (
+          <p className="text-center text-xs text-muted-foreground">
+            {kycApproved
+              ? "Add a bank account to send money."
+              : "Recipient must complete KYC before you can send money."}
+          </p>
+        )}
+      </div>
     </div>
   );
 }
@@ -212,10 +220,10 @@ function Detail({
 }) {
   return (
     <div>
-      <div className="text-xs uppercase tracking-wider text-muted-foreground">
+      <div className="text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
         {label}
       </div>
-      <div className="mt-1">{children}</div>
+      <div className="mt-1 text-foreground">{children}</div>
     </div>
   );
 }

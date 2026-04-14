@@ -1,19 +1,13 @@
 "use client";
 
 import { use } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { useRecipient, useUpdateRecipient } from "@/hooks/api";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PageHeader } from "@/components/ui/page-header";
+import { BackLink } from "@/components/ui/back-link";
 import { RecipientForm } from "@/components/recipients/recipient-form";
 
 export default function EditRecipientPage({
@@ -27,58 +21,66 @@ export default function EditRecipientPage({
   const updateRecipient = useUpdateRecipient();
 
   return (
-    <div className="space-y-6">
-      <Button variant="ghost" size="sm" asChild className="-ml-2 w-fit">
-        <Link href={`/recipients/${id}`}>
-          <ArrowLeft />
-          Back
-        </Link>
-      </Button>
+    <div className="space-y-7">
+      <div className="flex flex-col gap-3">
+        <BackLink href={`/recipients/${id}`} />
+        <PageHeader
+          eyebrow="Edit"
+          title={
+            recipient ? (
+              <>
+                Update{" "}
+                <span className="text-brand">
+                  {recipient.firstName}
+                </span>
+                .
+              </>
+            ) : (
+              "Edit recipient"
+            )
+          }
+        />
+      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl">Edit recipient</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {isLoading || !recipient ? (
-            <div className="space-y-3">
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
-            </div>
-          ) : (
-            <RecipientForm
-              submitLabel="Save changes"
-              submitting={updateRecipient.isPending}
-              defaultValues={{
-                firstName: recipient.firstName,
-                lastName: recipient.lastName,
-                email: recipient.email,
-                phoneNumberPrefix: recipient.phoneNumberPrefix,
-                phoneNumber: recipient.phoneNumber,
-                dateOfBirth: recipient.dateOfBirth?.substring(0, 10) ?? "",
-                addressLine1: recipient.addressLine1,
-                addressLine2: recipient.addressLine2 ?? "",
-                city: recipient.city,
-                state: recipient.state,
-                postalCode: recipient.postalCode,
-              }}
-              onSubmit={async (data) => {
-                try {
-                  await updateRecipient.mutateAsync({ id, data });
-                  toast.success("Recipient updated");
-                  router.push(`/recipients/${id}`);
-                } catch (err) {
-                  toast.error(
-                    err instanceof Error
-                      ? err.message
-                      : "Failed to update recipient",
-                  );
-                }
-              }}
-            />
-          )}
-        </CardContent>
+      <Card variant="elevated" className="p-6 sm:p-8">
+        {isLoading || !recipient ? (
+          <div className="space-y-3">
+            <Skeleton className="h-11 w-full" />
+            <Skeleton className="h-11 w-full" />
+            <Skeleton className="h-11 w-full" />
+          </div>
+        ) : (
+          <RecipientForm
+            submitLabel="Save changes"
+            submitting={updateRecipient.isPending}
+            defaultValues={{
+              firstName: recipient.firstName,
+              lastName: recipient.lastName,
+              email: recipient.email,
+              phoneNumberPrefix: recipient.phoneNumberPrefix,
+              phoneNumber: recipient.phoneNumber,
+              dateOfBirth: recipient.dateOfBirth?.substring(0, 10) ?? "",
+              addressLine1: recipient.addressLine1,
+              addressLine2: recipient.addressLine2 ?? "",
+              city: recipient.city,
+              state: recipient.state,
+              postalCode: recipient.postalCode,
+            }}
+            onSubmit={async (data) => {
+              try {
+                await updateRecipient.mutateAsync({ id, data });
+                toast.success("Recipient updated");
+                router.push(`/recipients/${id}`);
+              } catch (err) {
+                toast.error(
+                  err instanceof Error
+                    ? err.message
+                    : "Failed to update recipient",
+                );
+              }
+            }}
+          />
+        )}
       </Card>
     </div>
   );

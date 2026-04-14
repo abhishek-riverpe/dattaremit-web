@@ -1,33 +1,22 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { ArrowLeft, CreditCard, Hash, Loader2, ShieldCheck } from "lucide-react";
+import { CreditCard, Hash, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
+
 import {
   indianKycSchema,
   type IndianKycFormData,
 } from "@/schemas/indian-kyc.schema";
 import { useSubmitIndianKyc } from "@/hooks/api";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
+import { Form } from "@/components/ui/form";
+import { TextField } from "@/components/ui/text-field";
+import { PageHeader } from "@/components/ui/page-header";
+import { BackLink } from "@/components/ui/back-link";
 
 export default function IndianKycPage() {
   const router = useRouter();
@@ -39,107 +28,77 @@ export default function IndianKycPage() {
   });
 
   return (
-    <div className="mx-auto max-w-lg space-y-6">
-      <Button variant="ghost" size="sm" asChild className="-ml-2 w-fit">
-        <Link href="/kyc">
-          <ArrowLeft />
-          Back
-        </Link>
-      </Button>
+    <div className="mx-auto w-full max-w-lg space-y-7">
+      <div className="flex flex-col gap-3">
+        <BackLink href="/kyc" />
+        <PageHeader
+          eyebrow="Indian KYC"
+          title={
+            <>
+              Aadhar &{" "}
+              <span className="text-brand">PAN</span>
+              .
+            </>
+          }
+          subtitle="Encrypted in your browser before being sent. Verification takes 3–5 minutes."
+        />
+      </div>
 
-      <Card>
-        <CardHeader className="items-center text-center">
-          <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-            <ShieldCheck className="h-6 w-6 text-primary" />
-          </div>
-          <CardTitle className="text-xl">Indian KYC</CardTitle>
-          <CardDescription>
-            Your Aadhar and PAN are encrypted in your browser before being
-            sent to our server.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form
-              className="space-y-4"
-              onSubmit={form.handleSubmit(async (data) => {
-                try {
-                  await submit.mutateAsync(data);
-                  toast.success("Indian KYC submitted — verification in progress.");
-                  router.replace("/kyc");
-                } catch (err) {
-                  toast.error(
-                    err instanceof Error
-                      ? err.message
-                      : "Failed to submit Indian KYC",
-                  );
-                }
-              })}
+      <Card variant="elevated" className="p-6 sm:p-8">
+        <div className="mb-5 flex items-center gap-3 rounded-xl border border-border bg-muted/40 p-3 text-sm text-muted-foreground">
+          <ShieldCheck className="size-4 shrink-0 text-brand" />
+          End-to-end encrypted submission.
+        </div>
+
+        <Form {...form}>
+          <form
+            className="space-y-5"
+            onSubmit={form.handleSubmit(async (data) => {
+              try {
+                await submit.mutateAsync(data);
+                toast.success(
+                  "Indian KYC submitted — verification in progress.",
+                );
+                router.replace("/kyc");
+              } catch (err) {
+                toast.error(
+                  err instanceof Error
+                    ? err.message
+                    : "Failed to submit Indian KYC",
+                );
+              }
+            })}
+          >
+            <TextField
+              control={form.control}
+              name="aadharNumber"
+              label="Aadhar number"
+              inputMode="numeric"
+              maxLength={12}
+              placeholder="12-digit Aadhar number"
+              leading={<CreditCard className="size-4" />}
+              transform={(v) => v.replace(/\D/g, "")}
+            />
+            <TextField
+              control={form.control}
+              name="panNumber"
+              label="PAN number"
+              maxLength={10}
+              placeholder="ABCDE1234F"
+              leading={<Hash className="size-4" />}
+              transform={(v) => v.toUpperCase()}
+            />
+            <Button
+              type="submit"
+              variant="brand"
+              size="lg"
+              className="w-full"
+              loading={submit.isPending}
             >
-              <FormField
-                control={form.control}
-                name="aadharNumber"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Aadhar number</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <CreditCard className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                        <Input
-                          inputMode="numeric"
-                          maxLength={12}
-                          placeholder="12-digit Aadhar number"
-                          className="pl-9"
-                          {...field}
-                          onChange={(e) =>
-                            field.onChange(e.target.value.replace(/\D/g, ""))
-                          }
-                        />
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="panNumber"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>PAN number</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Hash className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                        <Input
-                          maxLength={10}
-                          placeholder="ABCDE1234F"
-                          className="pl-9"
-                          {...field}
-                          onChange={(e) =>
-                            field.onChange(e.target.value.toUpperCase())
-                          }
-                        />
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={submit.isPending}
-              >
-                {submit.isPending && (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                )}
-                Submit Indian KYC
-              </Button>
-            </form>
-          </Form>
-        </CardContent>
+              Submit Indian KYC
+            </Button>
+          </form>
+        </Form>
       </Card>
     </div>
   );

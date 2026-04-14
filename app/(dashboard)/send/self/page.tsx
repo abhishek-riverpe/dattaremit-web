@@ -4,7 +4,9 @@ import { useState } from "react";
 import Link from "next/link";
 import { useForm, type Resolver } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { ArrowLeft, Loader2, Send } from "lucide-react";
+import { Send } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
+
 import {
   transferAmountSchema,
   type TransferAmountFormData,
@@ -12,22 +14,11 @@ import {
 import { useAccount, useSendToSelf } from "@/hooks/api";
 import { generateIdempotencyKey } from "@/lib/idempotency";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
+import { Form } from "@/components/ui/form";
+import { TextField } from "@/components/ui/text-field";
+import { PageHeader } from "@/components/ui/page-header";
+import { BackLink } from "@/components/ui/back-link";
 import { TransferResult } from "@/components/transfer/transfer-result";
 import { useStepUp } from "@/hooks/use-step-up";
 
@@ -51,7 +42,9 @@ export default function SendToSelfPage() {
   );
 
   const form = useForm<TransferAmountFormData>({
-    resolver: yupResolver(transferAmountSchema) as unknown as Resolver<TransferAmountFormData>,
+    resolver: yupResolver(
+      transferAmountSchema,
+    ) as unknown as Resolver<TransferAmountFormData>,
     defaultValues: { amount: "", note: "" },
   });
 
@@ -59,26 +52,19 @@ export default function SendToSelfPage() {
 
   if (!hasDepositAccount) {
     return (
-      <div className="mx-auto max-w-lg space-y-4">
-        <Button variant="ghost" size="sm" asChild className="-ml-2 w-fit">
-          <Link href="/">
-            <ArrowLeft />
-            Back
-          </Link>
-        </Button>
-        <Card>
-          <CardHeader>
-            <CardTitle>Add a deposit account first</CardTitle>
-            <CardDescription>
-              You need to link your own receiving bank account to send money
-              to yourself.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button asChild>
-              <Link href="/link-bank/receive">Link deposit account</Link>
-            </Button>
-          </CardContent>
+      <div className="mx-auto w-full max-w-lg space-y-7">
+        <BackLink href="/" />
+        <Card variant="elevated" className="p-7">
+          <h2 className="font-semibold text-2xl text-foreground">
+            Add a deposit account first
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            You need to link your own receiving bank account before you can send
+            money to yourself.
+          </p>
+          <Button asChild variant="brand" className="mt-5">
+            <Link href="/link-bank/receive">Link deposit account</Link>
+          </Button>
         </Card>
       </div>
     );
@@ -86,12 +72,14 @@ export default function SendToSelfPage() {
 
   if (step === "result") {
     return (
-      <div className="mx-auto max-w-lg space-y-6">
+      <div className="mx-auto w-full max-w-lg space-y-6">
         {stepUpElement}
         <TransferResult
           status={sendError ? "error" : "success"}
-          title={sendError ? "Transfer failed" : "Transfer sent to yourself"}
-          description={sendError ?? `You moved $${amount} to your own account.`}
+          title={sendError ? "Transfer failed" : "Money on its way"}
+          description={
+            sendError ?? `You moved $${amount} to your own account.`
+          }
           transactionId={transactionId}
           onRetry={() => {
             setSendError(null);
@@ -104,138 +92,176 @@ export default function SendToSelfPage() {
   }
 
   return (
-    <div className="mx-auto max-w-lg space-y-6">
+    <div className="mx-auto w-full max-w-2xl space-y-7">
       {stepUpElement}
-      <Button
-        variant="ghost"
-        size="sm"
-        className="-ml-2 w-fit"
-        asChild={step === "amount"}
-        onClick={() => (step === "review" ? setStep("amount") : undefined)}
-      >
-        {step === "amount" ? (
-          <Link href="/">
-            <ArrowLeft />
-            Back
-          </Link>
-        ) : (
-          <span>
-            <ArrowLeft />
-            Back
-          </span>
+      {step === "amount" ? (
+        <BackLink href="/" />
+      ) : (
+        <button
+          onClick={() => setStep("amount")}
+          className="group inline-flex items-center gap-1.5 self-start text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground transition-colors hover:text-foreground"
+        >
+          ← Back
+        </button>
+      )}
+
+      <AnimatePresence mode="wait">
+        {step === "amount" && (
+          <motion.div
+            key="amount"
+            initial={{ opacity: 0, x: -12 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 12 }}
+            transition={{ duration: 0.3, ease: [0.2, 0.8, 0.2, 1] }}
+            className="space-y-6"
+          >
+            <PageHeader
+              eyebrow="Self-send"
+              title={
+                <>
+                  Move to{" "}
+                  <span className="text-brand">
+                    yourself
+                  </span>
+                  .
+                </>
+              }
+              subtitle="Funds go to your linked deposit account."
+            />
+
+            <Card variant="elevated" className="p-6 sm:p-8">
+              <Form {...form}>
+                <form
+                  className="space-y-5"
+                  onSubmit={form.handleSubmit((data) => {
+                    setAmount(data.amount);
+                    setNote(data.note ?? "");
+                    setStep("review");
+                  })}
+                >
+                  <TextField
+                    control={form.control}
+                    name="amount"
+                    label="Amount"
+                    inputMode="decimal"
+                    placeholder="100.00"
+                    leading={
+                      <span className="font-semibold text-base text-muted-foreground">
+                        $
+                      </span>
+                    }
+                    inputClassName="font-semibold text-2xl h-14 tabular pl-9"
+                  />
+                  <TextField
+                    control={form.control}
+                    name="note"
+                    label="Note"
+                    placeholder="What's it for?"
+                  />
+                  <Button
+                    type="submit"
+                    variant="brand"
+                    size="lg"
+                    className="w-full"
+                  >
+                    Continue
+                  </Button>
+                </form>
+              </Form>
+            </Card>
+          </motion.div>
         )}
-      </Button>
 
-      {step === "amount" && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Send to yourself</CardTitle>
-            <CardDescription>
-              Moves funds to your linked deposit account.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Form {...form}>
-              <form
-                className="space-y-4"
-                onSubmit={form.handleSubmit((data) => {
-                  setAmount(data.amount);
-                  setNote(data.note ?? "");
-                  setStep("review");
-                })}
-              >
-                <FormField
-                  control={form.control}
-                  name="amount"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Amount (USD)</FormLabel>
-                      <FormControl>
-                        <Input
-                          inputMode="decimal"
-                          placeholder="100.00"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="note"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Note (optional)</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Button type="submit" className="w-full">
-                  Continue
-                </Button>
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
-      )}
+        {step === "review" && (
+          <motion.div
+            key="review"
+            initial={{ opacity: 0, x: -12 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 12 }}
+            transition={{ duration: 0.3, ease: [0.2, 0.8, 0.2, 1] }}
+            className="space-y-6"
+          >
+            <PageHeader
+              eyebrow="Confirm"
+              title={
+                <>
+                  One last{" "}
+                  <span className="text-brand">
+                    look
+                  </span>
+                  .
+                </>
+              }
+            />
 
-      {step === "review" && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Review transfer</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4 text-sm">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Amount</span>
-              <span className="font-medium">${amount}</span>
-            </div>
-            {note && (
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Note</span>
-                <span className="font-medium">{note}</span>
+            <Card variant="elevated" className="overflow-hidden">
+              <div className="relative border-b border-border bg-gradient-to-br from-brand-soft/30 via-card to-card p-7 text-center">
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute -top-12 left-1/2 size-48 -translate-x-1/2 rounded-full bg-brand/15 blur-3xl"
+                />
+                <p className="relative text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                  Moving
+                </p>
+                <p className="relative mt-2 font-semibold text-5xl leading-none tabular text-foreground sm:text-6xl">
+                  ${amount}
+                </p>
+                <p className="relative mt-2 text-sm text-muted-foreground">
+                  to your own account
+                </p>
               </div>
-            )}
-            <Button
-              className="w-full"
-              disabled={sendToSelf.isPending}
-              onClick={async () => {
-                setSendError(null);
-                const res = await gate(async () => {
-                  const amountCents = Math.round(parseFloat(amount) * 100);
-                  try {
-                    return await sendToSelf.mutateAsync({
-                      payload: { amountCents, note: note || undefined },
-                      idempotencyKey,
-                    });
-                  } catch (err) {
-                    setSendError(
-                      err instanceof Error ? err.message : "Transfer failed",
-                    );
-                    return undefined;
-                  }
-                });
-                if (res) {
-                  setTransactionId(res.transactionId);
-                  setStep("result");
-                } else if (sendError) {
-                  setStep("result");
-                }
-              }}
-            >
-              {sendToSelf.isPending ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Send />
+
+              {note && (
+                <div className="space-y-3 p-6 text-sm">
+                  <div className="flex items-start justify-between gap-3">
+                    <span className="text-muted-foreground">Note</span>
+                    <span className="text-right font-medium text-foreground">
+                      {note}
+                    </span>
+                  </div>
+                </div>
               )}
-              Confirm
-            </Button>
-          </CardContent>
-        </Card>
-      )}
+
+              <div className="border-t border-border p-6">
+                <Button
+                  variant="brand"
+                  size="lg"
+                  className="w-full"
+                  loading={sendToSelf.isPending}
+                  onClick={async () => {
+                    setSendError(null);
+                    const res = await gate(async () => {
+                      const amountCents = Math.round(parseFloat(amount) * 100);
+                      try {
+                        return await sendToSelf.mutateAsync({
+                          payload: { amountCents, note: note || undefined },
+                          idempotencyKey,
+                        });
+                      } catch (err) {
+                        setSendError(
+                          err instanceof Error
+                            ? err.message
+                            : "Transfer failed",
+                        );
+                        return undefined;
+                      }
+                    });
+                    if (res) {
+                      setTransactionId(res.transactionId);
+                      setStep("result");
+                    } else if (sendError) {
+                      setStep("result");
+                    }
+                  }}
+                >
+                  {!sendToSelf.isPending && <Send />}
+                  Confirm
+                </Button>
+              </div>
+            </Card>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

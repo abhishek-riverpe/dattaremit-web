@@ -1,20 +1,13 @@
 "use client";
 
 import { use } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { useAddRecipientBank, useRecipient } from "@/hooks/api";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PageHeader } from "@/components/ui/page-header";
+import { BackLink } from "@/components/ui/back-link";
 import { RecipientBankForm } from "@/components/recipients/recipient-bank-form";
 
 export default function RecipientBankPage({
@@ -30,54 +23,55 @@ export default function RecipientBankPage({
   const existing = recipient?.hasBankAccount;
 
   return (
-    <div className="space-y-6">
-      <Button variant="ghost" size="sm" asChild className="-ml-2 w-fit">
-        <Link href={`/recipients/${id}`}>
-          <ArrowLeft />
-          Back
-        </Link>
-      </Button>
+    <div className="space-y-7">
+      <div className="flex flex-col gap-3">
+        <BackLink href={`/recipients/${id}`} />
+        <PageHeader
+          eyebrow="Bank"
+          title={
+            <>
+              {existing ? "Update" : "Add a"}{" "}
+              <span className="text-brand">
+                bank account
+              </span>
+              .
+            </>
+          }
+          subtitle="This is where the money will be delivered."
+        />
+      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl">
-            {existing ? "Update bank" : "Add bank account"}
-          </CardTitle>
-          <CardDescription>
-            This is where your money will be delivered.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isLoading || !recipient ? (
-            <div className="space-y-3">
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
-            </div>
-          ) : (
-            <RecipientBankForm
-              submitLabel={existing ? "Update bank" : "Save bank"}
-              submitting={addBank.isPending}
-              defaultValues={{
-                bankName: recipient.bankName ?? "",
-                accountName: `${recipient.firstName} ${recipient.lastName}`.trim(),
-                ifsc: recipient.bankIfsc ?? "",
-                phoneNumber: recipient.phoneNumber,
-              }}
-              onSubmit={async (data) => {
-                try {
-                  await addBank.mutateAsync({ id, data });
-                  toast.success(existing ? "Bank updated" : "Bank added");
-                  router.push(`/recipients/${id}`);
-                } catch (err) {
-                  toast.error(
-                    err instanceof Error ? err.message : "Failed to save bank",
-                  );
-                }
-              }}
-            />
-          )}
-        </CardContent>
+      <Card variant="elevated" className="p-6 sm:p-8">
+        {isLoading || !recipient ? (
+          <div className="space-y-3">
+            <Skeleton className="h-11 w-full" />
+            <Skeleton className="h-11 w-full" />
+            <Skeleton className="h-11 w-full" />
+          </div>
+        ) : (
+          <RecipientBankForm
+            submitLabel={existing ? "Update bank" : "Save bank"}
+            submitting={addBank.isPending}
+            defaultValues={{
+              bankName: recipient.bankName ?? "",
+              accountName:
+                `${recipient.firstName} ${recipient.lastName}`.trim(),
+              ifsc: recipient.bankIfsc ?? "",
+              phoneNumber: recipient.phoneNumber,
+            }}
+            onSubmit={async (data) => {
+              try {
+                await addBank.mutateAsync({ id, data });
+                toast.success(existing ? "Bank updated" : "Bank added");
+                router.push(`/recipients/${id}`);
+              } catch (err) {
+                toast.error(
+                  err instanceof Error ? err.message : "Failed to save bank",
+                );
+              }
+            }}
+          />
+        )}
       </Card>
     </div>
   );

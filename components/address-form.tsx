@@ -10,36 +10,19 @@ import { submitOnboardingAddress } from "@/services/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/constants/query-keys";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+
+import { Card } from "@/components/ui/card";
+import { Form, FormField, FormItem } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { TextField } from "@/components/ui/text-field";
+import { PageHeader } from "@/components/ui/page-header";
 import { CountrySelector } from "@/components/country-selector";
 
 export interface AddressFormProps {
-  /** Where to navigate after first successful create. Defaults to "/kyc". */
   nextHrefOnCreate?: string;
-  /** Where to navigate after a successful update. Defaults to "/". */
   nextHrefOnUpdate?: string;
-  /** Optional callback fired after a successful save. Takes precedence over
-   *  static nextHref props when provided. */
   onAfterSubmit?: (mode: "create" | "update") => void | Promise<void>;
-  /** When true, skip the surrounding Card chrome. */
   chromeless?: boolean;
   title?: string;
   description?: string;
@@ -60,7 +43,7 @@ export function AddressForm({
 
   const { data: account, isLoading } = useAccount();
   const existingAddress = account?.addresses?.find(
-    (a) => a.type === "PRESENT"
+    (a) => a.type === "PRESENT",
   );
 
   const addressMutation = useMutation({
@@ -131,138 +114,102 @@ export function AddressForm({
     const skeletons = (
       <div className="space-y-4">
         {Array.from({ length: 5 }).map((_, i) => (
-          <Skeleton key={i} className="h-10 w-full" />
+          <Skeleton key={i} className="h-11 w-full" />
         ))}
       </div>
     );
     if (chromeless) return skeletons;
     return (
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-8 w-48" />
-          <Skeleton className="mt-2 h-4 w-32" />
-        </CardHeader>
-        <CardContent>{skeletons}</CardContent>
-      </Card>
+      <div className="space-y-6">
+        <Skeleton className="h-12 w-72" />
+        <Card variant="elevated" className="p-6 sm:p-8">
+          {skeletons}
+        </Card>
+      </div>
     );
   }
 
-  const headerTitle = title ?? "Your Address";
-  const headerDescription = description ?? "Where do you live?";
+  const headerTitle = title ?? "Your address";
+  const headerDescription = description ?? "Where do you currently live?";
   const submitText = existingAddress
-    ? submitLabel?.update ?? "Update"
-    : submitLabel?.create ?? "Save";
+    ? (submitLabel?.update ?? "Save changes")
+    : (submitLabel?.create ?? "Continue");
 
   const formContent = (
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="country"
-              render={({ field }) => (
-                <FormItem>
-                  <CountrySelector
-                    label="Country"
-                    value={field.value}
-                    onSelect={field.onChange}
-                    placeholder="Select country"
-                    error={form.formState.errors.country?.message}
-                  />
-                </FormItem>
-              )}
-            />
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+        <FormField
+          control={form.control}
+          name="country"
+          render={({ field }) => (
+            <FormItem>
+              <CountrySelector
+                label="Country"
+                value={field.value}
+                onSelect={field.onChange}
+                placeholder="Select country"
+                error={form.formState.errors.country?.message}
+              />
+            </FormItem>
+          )}
+        />
+        <TextField
+          control={form.control}
+          name="state"
+          label="State / Division"
+          placeholder="Enter state"
+        />
+        <TextField
+          control={form.control}
+          name="city"
+          label="City"
+          placeholder="Enter city"
+        />
+        <TextField
+          control={form.control}
+          name="addressLine1"
+          label="Street address"
+          placeholder="Enter street address"
+        />
+        <TextField
+          control={form.control}
+          name="postalCode"
+          label="Postal code"
+          placeholder="Enter postal code"
+        />
 
-            <FormField
-              control={form.control}
-              name="state"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>State / Division</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter state" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="city"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>City</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter city" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="addressLine1"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Street Address</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter street address" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="postalCode"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Postal Code</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter postal code" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="space-y-3 pt-2">
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={addressMutation.isPending}
-              >
-                {addressMutation.isPending && (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                )}
-                {submitText}
-              </Button>
-            </div>
-          </form>
-        </Form>
+        <Button
+          type="submit"
+          variant="brand"
+          size="lg"
+          className="w-full"
+          loading={addressMutation.isPending}
+        >
+          {submitText}
+        </Button>
+      </form>
+    </Form>
   );
 
   if (chromeless) {
     return (
-      <div className="space-y-6">
-        <div>
-          <h2 className="text-2xl font-bold">{headerTitle}</h2>
-          <p className="mt-1 text-sm text-muted-foreground">{headerDescription}</p>
-        </div>
+      <div className="flex flex-col gap-7">
+        <PageHeader title={headerTitle} subtitle={headerDescription} />
         {formContent}
       </div>
     );
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-2xl">{headerTitle}</CardTitle>
-        <CardDescription>{headerDescription}</CardDescription>
-      </CardHeader>
-      <CardContent>{formContent}</CardContent>
-    </Card>
+    <div className="space-y-7">
+      <PageHeader
+        eyebrow="Address"
+        title={headerTitle}
+        subtitle={headerDescription}
+      />
+      <Card variant="elevated" className="p-6 sm:p-8">
+        {formContent}
+      </Card>
+    </div>
   );
 }

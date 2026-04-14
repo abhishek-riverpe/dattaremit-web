@@ -2,23 +2,27 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Building2, CheckCircle2, Loader2, ArrowRight, Landmark, Zap, ShieldCheck } from "lucide-react";
+import {
+  Building2,
+  CheckCircle2,
+  ArrowRight,
+  Landmark,
+  Zap,
+  ShieldCheck,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+
 import { queryKeys } from "@/constants/query-keys";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { PageHeader } from "@/components/ui/page-header";
 import { PlaidLinkButton } from "@/components/plaid-link-button";
 import { useAccount, useAddExternalAccount } from "@/hooks/api";
 import { ApiError } from "@/services/api";
+import { cn } from "@/lib/utils";
 
 export default function LinkBankPage() {
   const router = useRouter();
@@ -43,9 +47,7 @@ export default function LinkBankPage() {
     }
 
     const accountName =
-      accounts?.[0]?.name ||
-      meta?.institution?.name ||
-      "external_account";
+      accounts?.[0]?.name || meta?.institution?.name || "external_account";
 
     addExternal.mutate(
       {
@@ -64,10 +66,10 @@ export default function LinkBankPage() {
           toast.error(
             err instanceof ApiError
               ? err.message
-              : "Failed to link external account"
+              : "Failed to link external account",
           );
         },
-      }
+      },
     );
   }
 
@@ -75,66 +77,76 @@ export default function LinkBankPage() {
     !!user?.zynkExternalAccountId && !!user?.zynkDepositAccountId;
 
   return (
-    <div className="flex flex-1 flex-col items-center justify-center">
-      <div className="w-full max-w-2xl space-y-4">
-        <h1 className="text-2xl font-bold text-center">Link Bank Account &amp; Add Beneficiary</h1>
-        <p className="text-center text-muted-foreground">
-          Connect your bank and add a beneficiary to start sending money.
-        </p>
+    <div className="space-y-8">
+      <PageHeader
+        eyebrow="Setup"
+        title={
+          <>
+            Link your{" "}
+            <span className="text-brand">
+              accounts
+            </span>
+            .
+          </>
+        }
+        subtitle="Connect a US account to fund transfers and add a beneficiary on the receiving end."
+      />
 
-        {accountStatus !== "ACTIVE" ? (
-          <Card className="mx-auto w-full max-w-md">
-            <CardHeader className="text-center">
-              <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                <ShieldCheck className="h-6 w-6 text-primary" />
-              </div>
-              <CardTitle className="text-lg">Verify Your Identity</CardTitle>
-              <CardDescription>
-                {accountStatus === "PENDING"
-                  ? "Your KYC verification is being reviewed. You'll be able to connect your bank account once it's approved."
-                  : "Complete your KYC verification to connect your bank account."}
-              </CardDescription>
-            </CardHeader>
-            {accountStatus !== "PENDING" && (
-              <CardContent className="flex justify-center">
-                <Button onClick={() => router.push("/kyc")}>
-                  Complete KYC
-                  <ArrowRight />
-                </Button>
-              </CardContent>
-            )}
-          </Card>
-        ) : (
+      {accountStatus !== "ACTIVE" ? (
+        <Card variant="elevated" className="mx-auto max-w-lg p-8 text-center">
+          <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-2xl bg-brand/15 text-brand">
+            <ShieldCheck className="size-6" />
+          </div>
+          <h2 className="font-semibold text-2xl text-foreground">
+            Verify your identity first
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {accountStatus === "PENDING"
+              ? "Your KYC is under review. You can link a bank once it's approved."
+              : "Complete KYC to unlock bank linking."}
+          </p>
+          {accountStatus !== "PENDING" && (
+            <Button
+              variant="brand"
+              className="mt-5"
+              onClick={() => router.push("/kyc")}
+            >
+              Complete KYC
+              <ArrowRight />
+            </Button>
+          )}
+        </Card>
+      ) : (
         <>
-        <div className="grid gap-4 sm:grid-cols-2">
-          {/* Link Bank Account Card */}
-          <Card>
-            <CardHeader className="text-center">
-              <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                {user?.zynkExternalAccountId ? (
-                  <CheckCircle2 className="h-6 w-6 text-green-600 dark:text-green-400" />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <SetupCard
+              icon={
+                user?.zynkExternalAccountId ? (
+                  <CheckCircle2 className="size-5" />
                 ) : (
-                  <Building2 className="h-6 w-6 text-primary" />
-                )}
-              </div>
-              <CardTitle className="text-lg">Link Bank Account</CardTitle>
-              <CardDescription>
-                Link your US bank account via Plaid to fund transfers.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col items-center gap-3">
+                  <Building2 className="size-5" />
+                )
+              }
+              done={!!user?.zynkExternalAccountId}
+              title="Send account"
+              description="Link your US bank via Plaid to fund transfers."
+              step="01"
+            >
               {user?.achPushEnabled && !user?.zynkExternalAccountId && (
-                <div className="flex w-full items-center justify-between rounded-lg border p-3">
-                  <div className="flex items-center gap-2">
-                    <Zap className="h-4 w-4 text-amber-500" />
+                <div className="flex w-full items-center justify-between rounded-xl border border-border bg-muted/40 p-3">
+                  <div className="flex items-center gap-2.5">
+                    <Zap className="size-4 text-brand" />
                     <div>
-                      <Label htmlFor="fast-transfer" className="text-sm font-medium">
-                        Fast Transfer
+                      <Label
+                        htmlFor="fast-transfer"
+                        className="text-sm font-medium"
+                      >
+                        Fast transfer
                       </Label>
                       <p className="text-xs text-muted-foreground">
                         {useFastTransfer
                           ? "Instant ACH push"
-                          : "Regular ACH pull (1-3 days)"}
+                          : "Regular ACH pull (1–3 days)"}
                       </p>
                     </div>
                   </div>
@@ -145,18 +157,19 @@ export default function LinkBankPage() {
                   />
                 </div>
               )}
+
               {user?.zynkExternalAccountId ? (
-                <p className="text-sm font-medium text-green-600 dark:text-green-400">
+                <p className="text-sm font-medium text-success">
                   Account linked
                 </p>
               ) : addExternal.isPending ? (
-                <Button disabled size="lg">
-                  <Loader2 className="animate-spin" />
-                  Setting up account...
+                <Button variant="brand" size="lg" loading>
+                  Setting up account…
                 </Button>
               ) : (
                 <PlaidLinkButton onSuccess={handlePlaidSuccess} />
               )}
+
               {addExternal.isError && (
                 <p className="text-sm text-destructive">
                   {addExternal.error instanceof ApiError
@@ -164,47 +177,101 @@ export default function LinkBankPage() {
                     : "Something went wrong. Please try again."}
                 </p>
               )}
-            </CardContent>
-          </Card>
+            </SetupCard>
 
-          {/* Add Beneficiary Card */}
-          <Card>
-            <CardHeader className="text-center">
-              <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                {user?.zynkDepositAccountId ? (
-                  <CheckCircle2 className="h-6 w-6 text-green-600 dark:text-green-400" />
+            <SetupCard
+              icon={
+                user?.zynkDepositAccountId ? (
+                  <CheckCircle2 className="size-5" />
                 ) : (
-                  <Landmark className="h-6 w-6 text-primary" />
-                )}
-              </div>
-              <CardTitle className="text-lg">Add Beneficiary</CardTitle>
-              <CardDescription>
-                Add your recipient&apos;s Indian bank details.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col items-center gap-3">
+                  <Landmark className="size-5" />
+                )
+              }
+              done={!!user?.zynkDepositAccountId}
+              title="Receive account"
+              description="Add your recipient's Indian bank details."
+              step="02"
+            >
               {user?.zynkDepositAccountId ? (
-                <p className="text-sm font-medium text-green-600 dark:text-green-400">
+                <p className="text-sm font-medium text-success">
                   Account linked
                 </p>
               ) : (
-                <Button onClick={() => router.push("/link-bank/receive")}>
-                  Add Beneficiary
+                <Button
+                  variant="brand"
+                  onClick={() => router.push("/link-bank/receive")}
+                >
+                  Add beneficiary
                   <ArrowRight />
                 </Button>
               )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {allLinked && (
-          <div className="text-center pt-2">
-            <Button onClick={() => router.push("/")}>Go to Dashboard</Button>
+            </SetupCard>
           </div>
-        )}
+
+          {allLinked && (
+            <div className="text-center">
+              <Button variant="brand" size="lg" onClick={() => router.push("/")}>
+                Go to dashboard
+                <ArrowRight />
+              </Button>
+            </div>
+          )}
         </>
-        )}
-      </div>
+      )}
     </div>
+  );
+}
+
+function SetupCard({
+  step,
+  icon,
+  title,
+  description,
+  done,
+  children,
+}: {
+  step: string;
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  done: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <Card
+      variant="elevated"
+      className={cn(
+        "relative overflow-hidden p-6",
+        done && "border-success/30",
+      )}
+    >
+      <div
+        aria-hidden="true"
+        className={cn(
+          "pointer-events-none absolute -right-12 -top-12 size-40 rounded-full blur-3xl",
+          done ? "bg-success/15" : "bg-brand/10",
+        )}
+      />
+      <div className="relative flex flex-col gap-5">
+        <div className="flex items-start justify-between gap-3">
+          <div
+            className={cn(
+              "flex size-11 items-center justify-center rounded-xl",
+              done ? "bg-success/15 text-success" : "bg-brand/15 text-brand",
+            )}
+          >
+            {icon}
+          </div>
+          <span className="font-semibold text-xl tabular text-muted-foreground/40">
+            {step}
+          </span>
+        </div>
+        <div className="flex flex-col gap-1">
+          <h3 className="font-semibold text-xl text-foreground">{title}</h3>
+          <p className="text-sm text-muted-foreground">{description}</p>
+        </div>
+        <div className="flex flex-col items-stretch gap-3">{children}</div>
+      </div>
+    </Card>
   );
 }

@@ -2,19 +2,14 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useValidateReferral } from "@/hooks/api";
+import { Gift } from "lucide-react";
 import { toast } from "sonner";
-import { Loader2, Gift } from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+
+import { useValidateReferral } from "@/hooks/api";
+import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
+import { Field, FieldLabel } from "@/components/ui/field";
 
 export default function ReferralPage() {
   const router = useRouter();
@@ -46,61 +41,73 @@ export default function ReferralPage() {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex flex-col items-center gap-4">
-          <Gift className="h-16 w-16 text-muted-foreground" />
-          <div className="text-center">
-            <CardTitle className="text-2xl">Referral Code</CardTitle>
-            <CardDescription>
-              Have a referral code? Enter it below to get started.
-            </CardDescription>
+    <div className="mx-auto w-full max-w-md">
+      <Card
+        variant="elevated"
+        className="relative overflow-hidden p-8 sm:p-10"
+      >
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -top-24 left-1/2 size-64 -translate-x-1/2 rounded-full bg-brand/15 blur-3xl"
+        />
+
+        <div className="relative flex flex-col items-center gap-3 text-center">
+          <div className="flex size-14 items-center justify-center rounded-2xl bg-brand/15 text-brand">
+            <Gift className="size-6" />
           </div>
+          <h1 className="font-semibold text-3xl leading-tight text-foreground">
+            Got a{" "}
+            <span className="text-brand">code</span>?
+          </h1>
+          <p className="max-w-sm text-sm leading-relaxed text-muted-foreground">
+            Enter it now to claim your bonus when you complete sign up.
+          </p>
         </div>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="referral-code">Referral Code</Label>
+
+        <div className="relative mt-7 space-y-4">
+          <Field>
+            <FieldLabel htmlFor="referral-code">Referral code</FieldLabel>
             <Input
               id="referral-code"
-              placeholder="Enter referral code"
+              placeholder="DATTAFRIEND"
               value={code}
               onChange={(e) => setCode(e.target.value.toUpperCase())}
               disabled={validateMutation.isPending}
+              className="text-center font-semibold text-lg tracking-[0.3em]"
             />
-          </div>
+          </Field>
 
           {validateMutation.isError && (
-            <p className="text-sm text-destructive">
+            <p className="text-center text-sm text-destructive">
               {validateMutation.error instanceof Error
                 ? validateMutation.error.message
                 : "Invalid referral code. Please try again."}
             </p>
           )}
 
-          <div className="space-y-3 pt-2">
+          <div className="flex flex-col gap-2">
             <Button
+              variant="brand"
+              size="lg"
               className="w-full"
+              loading={validateMutation.isPending}
+              disabled={!code.trim()}
               onClick={handleApply}
-              disabled={validateMutation.isPending || !code.trim()}
             >
-              {validateMutation.isPending && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              )}
-              Apply
+              Apply code
             </Button>
             <Button
-              variant="outline"
+              variant="ghost"
+              size="lg"
               className="w-full"
               onClick={handleSkip}
               disabled={validateMutation.isPending}
             >
-              Skip
+              Skip for now
             </Button>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </Card>
+    </div>
   );
 }

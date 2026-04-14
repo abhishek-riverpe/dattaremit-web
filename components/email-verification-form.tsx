@@ -4,21 +4,20 @@ import { useSignUp } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
 import { getClerkErrorMessage } from "@/utils/clerk-error";
-import { AuthPageHeader } from "@/components/auth-page-header";
-import { Button } from "@/components/ui/button";
-import {
-  InputOTP,
-  InputOTPGroup,
-  InputOTPSlot,
-} from "@/components/ui/input-otp";
+
+import { AuthShell } from "@/components/ui/auth-shell";
+import { OtpForm } from "@/components/ui/otp-form";
 
 interface EmailVerificationFormProps {
   email: string;
+  onBack?: () => void;
 }
 
-export function EmailVerificationForm({ email }: EmailVerificationFormProps) {
+export function EmailVerificationForm({
+  email,
+  onBack,
+}: EmailVerificationFormProps) {
   const { isLoaded, signUp, setActive } = useSignUp();
   const router = useRouter();
 
@@ -29,10 +28,6 @@ export function EmailVerificationForm({ email }: EmailVerificationFormProps) {
   const onVerify = async () => {
     if (!isLoaded) return;
 
-    if (!code.trim()) {
-      setError("Verification code is required");
-      return;
-    }
     setError(undefined);
     setLoading(true);
 
@@ -45,47 +40,61 @@ export function EmailVerificationForm({ email }: EmailVerificationFormProps) {
         await setActive({ session: signUpAttempt.createdSessionId });
         router.replace("/");
       } else {
-        toast.error("Verification could not be completed.");
+        setError("Verification could not be completed.");
       }
     } catch (err: unknown) {
-      toast.error(getClerkErrorMessage(err, "Verification failed. Please try again."));
+      const message = getClerkErrorMessage(
+        err,
+        "Verification failed. Please try again.",
+      );
+      setError(message);
     } finally {
       setLoading(false);
     }
   };
 
+  const onResend = async () => {
+    if (!isLoaded) return;
+    try {
+      await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
+      setCode("");
+      setError(undefined);
+      toast.success("Code sent. Check your inbox.");
+    } catch (err: unknown) {
+      toast.error(getClerkErrorMessage(err, "Couldn't resend the code."));
+    }
+  };
+
   return (
-    <div>
-      <AuthPageHeader
-        title="Verify your email"
-        subtitle={`We sent a code to ${email}`}
+    <AuthShell
+      eyebrow="Verify"
+      title={
+        <>
+          Check your
+          <br />
+          <span className="text-brand">inbox</span>.
+        </>
+      }
+      subtitle={
+        <>
+          We sent a 6-digit code to{" "}
+          <span className="font-medium text-foreground">{email}</span>.
+        </>
+      }
+      back={onBack ? { href: "#", label: "Back" } : undefined}
+    >
+      <OtpForm
+        value={code}
+        onChange={(v) => {
+          setCode(v);
+          if (error) setError(undefined);
+        }}
+        onSubmit={onVerify}
+        loading={loading}
+        error={error}
+        submitLabel="Verify email"
+        onResend={onResend}
       />
-      <div className="space-y-4">
-        <div className="flex flex-col items-center gap-2">
-          <InputOTP maxLength={6} value={code} onChange={setCode}>
-            <InputOTPGroup>
-              <InputOTPSlot index={0} />
-              <InputOTPSlot index={1} />
-              <InputOTPSlot index={2} />
-              <InputOTPSlot index={3} />
-              <InputOTPSlot index={4} />
-              <InputOTPSlot index={5} />
-            </InputOTPGroup>
-          </InputOTP>
-          {error && (
-            <p className="text-sm text-destructive">{error}</p>
-          )}
-        </div>
-        <Button
-          onClick={onVerify}
-          className="w-full"
-          size="lg"
-          disabled={loading}
-        >
-          {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Verify Email
-        </Button>
-      </div>
-    </div>
+    </AuthShell>
   );
 }

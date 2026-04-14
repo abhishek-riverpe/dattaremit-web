@@ -1,12 +1,11 @@
-import { Separator } from "@/components/ui/separator";
-
-export function OrDivider() {
+export function OrDivider({ label = "or" }: { label?: string }) {
   return (
-    <div className="relative my-6">
-      <Separator />
-      <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-muted/80 px-2 text-xs text-muted-foreground">
-        or
+    <div className="my-6 flex items-center gap-4">
+      <div className="h-px flex-1 bg-border" />
+      <span className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+        {label}
       </span>
+      <div className="h-px flex-1 bg-border" />
     </div>
   );
 }

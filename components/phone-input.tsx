@@ -1,21 +1,14 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
+import { Check, ChevronDown } from "lucide-react";
+
 import { Label } from "@/components/ui/label";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import { Check, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   COUNTRIES,
@@ -33,9 +26,8 @@ interface PhoneInputProps {
   defaultCountryCode?: string;
 }
 
-// Sort countries by dial code length (longest first) for proper matching
 const countriesByDialLength = [...COUNTRIES].sort(
-  (a, b) => b.dial.length - a.dial.length
+  (a, b) => b.dial.length - a.dial.length,
 );
 
 export function PhoneInput({
@@ -59,7 +51,7 @@ export function PhoneInput({
     }
 
     const matched = countriesByDialLength.find((c) =>
-      value.startsWith(c.dial)
+      value.startsWith(c.dial),
     );
     if (matched) {
       return {
@@ -80,7 +72,6 @@ export function PhoneInput({
       onChangeCountry?.(country.dial);
     }
     setOpen(false);
-    // Focus the input after country selection
     setTimeout(() => inputRef.current?.focus(), 0);
   };
 
@@ -93,20 +84,18 @@ export function PhoneInput({
       {label && <Label>{label}</Label>}
       <div
         className={cn(
-          "border-input flex h-11 w-full items-center rounded-lg border shadow-xs transition-[color,box-shadow]",
-          "dark:bg-input/30 dark:border-input",
-          focused && !error && "border-ring ring-ring/50 ring-[3px]",
-          error && "border-destructive ring-destructive/20 dark:ring-destructive/40"
+          "flex h-11 w-full items-center rounded-lg border border-input bg-card/60 shadow-soft backdrop-blur-sm transition-all",
+          "hover:border-foreground/20",
+          focused && !error && "border-brand bg-card ring-[3px] ring-brand/30",
+          error && "border-destructive ring-[3px] ring-destructive/20",
         )}
       >
-        {/* Country code selector */}
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
             <button
               type="button"
-              role="combobox"
-              aria-expanded={open}
-              className="flex shrink-0 items-center gap-1.5 rounded-l-lg px-3 outline-none transition-colors hover:bg-accent/50"
+              aria-label="Select country"
+              className="flex shrink-0 items-center gap-1.5 rounded-l-lg px-3 outline-none transition-colors hover:bg-accent/40"
             >
               <span className="text-lg leading-none">
                 {getFlagEmoji(selectedCountry.code)}
@@ -114,52 +103,49 @@ export function PhoneInput({
               <span className="text-sm font-medium">
                 {selectedCountry.dial}
               </span>
-              <ChevronDown className="h-3.5 w-3.5 shrink-0 opacity-50" />
+              <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground/70" />
             </button>
           </PopoverTrigger>
-          <PopoverContent className="w-[280px] p-0">
-            <Command>
-              <CommandInput placeholder="Search country..." />
-              <CommandList>
-                <CommandEmpty>No country found.</CommandEmpty>
-                <CommandGroup>
-                  {COUNTRIES.map((country) => (
-                    <CommandItem
-                      key={country.code}
-                      value={`${country.name} ${country.dial}`}
-                      onSelect={() => handleCountrySelect(country.code)}
-                    >
-                      <Check
-                        className={cn(
-                          "mr-2 h-4 w-4",
-                          selectedCountry.code === country.code
-                            ? "opacity-100"
-                            : "opacity-0"
-                        )}
-                      />
-                      <span className="text-lg leading-none">
-                        {getFlagEmoji(country.code)}
-                      </span>{" "}
-                      {country.name}{" "}
-                      <span className="ml-auto text-muted-foreground">
-                        {country.dial}
-                      </span>
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </CommandList>
-            </Command>
+          <PopoverContent align="start" sideOffset={8} className="w-56 p-1">
+            <div role="listbox" className="flex flex-col">
+              {COUNTRIES.map((country) => {
+                const isSelected = selectedCountry.code === country.code;
+                return (
+                  <button
+                    key={country.code}
+                    role="option"
+                    aria-selected={isSelected}
+                    type="button"
+                    onClick={() => handleCountrySelect(country.code)}
+                    className={cn(
+                      "flex items-center gap-2 rounded-md px-2.5 py-2 text-sm outline-none transition-colors",
+                      "hover:bg-accent hover:text-accent-foreground focus-visible:bg-accent",
+                      isSelected && "bg-brand/10",
+                    )}
+                  >
+                    <span className="text-lg leading-none">
+                      {getFlagEmoji(country.code)}
+                    </span>
+                    <span className="flex-1 text-left">{country.name}</span>
+                    <span className="text-muted-foreground">
+                      {country.dial}
+                    </span>
+                    {isSelected && (
+                      <Check className="size-3.5 shrink-0 text-brand" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </PopoverContent>
         </Popover>
 
-        {/* Divider */}
         <div className="h-5 w-px shrink-0 bg-border" />
 
-        {/* Phone number input */}
         <input
           ref={inputRef}
           type="tel"
-          className="placeholder:text-muted-foreground h-full flex-1 bg-transparent px-3 text-base outline-none md:text-sm"
+          className="h-full flex-1 bg-transparent px-3 text-base placeholder:text-muted-foreground/70 outline-none md:text-sm"
           value={localNumber}
           onChange={handleLocalNumberChange}
           onFocus={() => setFocused(true)}

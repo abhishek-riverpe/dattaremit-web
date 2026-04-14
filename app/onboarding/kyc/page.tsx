@@ -1,10 +1,11 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
-import { Clock, Loader2, Mail, RefreshCw, ShieldCheck } from "lucide-react";
+import { Clock, Mail, RefreshCw, ShieldCheck } from "lucide-react";
 import { useAccount } from "@/hooks/api";
 import { requestOnboardingKyc } from "@/services/api";
 import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/ui/page-header";
 
 export default function OnboardingKycPage() {
   const { data: account, isLoading } = useAccount();
@@ -16,54 +17,60 @@ export default function OnboardingKycPage() {
   if (isLoading) {
     return (
       <div className="flex h-40 items-center justify-center">
-        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+        <div className="relative flex size-10 items-center justify-center">
+          <span className="absolute inset-0 animate-ping rounded-full bg-brand/30" />
+          <span className="relative size-2 rounded-full bg-brand" />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold">Verify your identity</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          We use a secure email-based verification to confirm who you are.
-        </p>
-      </div>
+    <div className="space-y-7">
+      <PageHeader
+        title={
+          <>
+            Verify your{" "}
+            <span className="text-brand">
+              identity
+            </span>
+            .
+          </>
+        }
+        subtitle="A quick check unlocks every transfer feature."
+      />
 
       {inReview ? (
-        <div className="flex flex-col items-center gap-3 rounded-xl border bg-muted/40 px-6 py-10 text-center">
-          <Clock className="h-10 w-10 text-muted-foreground" />
-          <p className="font-medium">Verification in progress</p>
-          <p className="max-w-xs text-sm text-muted-foreground">
-            We&apos;re reviewing your information. This usually completes in a
-            few minutes — you&apos;ll be redirected automatically once it&apos;s
-            approved.
-          </p>
-        </div>
+        <StatusBlock
+          icon={<Clock className="size-6" />}
+          title="Verification in progress"
+          description="We're reviewing your information. This usually completes in a few minutes — you'll be redirected automatically once it's approved."
+        />
       ) : requestLink.isSuccess ? (
-        <div className="flex flex-col items-center gap-3 rounded-xl border bg-muted/40 px-6 py-10 text-center">
-          <Mail className="h-10 w-10 text-green-600" />
-          <p className="font-medium">Check your email</p>
-          <p className="max-w-xs text-sm text-muted-foreground">
-            We sent you a secure verification link. Open it to complete KYC,
-            then come back here.
-          </p>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => requestLink.reset()}
-            className="mt-2 gap-2"
-          >
-            <RefreshCw className="h-4 w-4" />
-            Resend link
-          </Button>
-        </div>
+        <StatusBlock
+          icon={<Mail className="size-6" />}
+          title="Check your inbox"
+          description="We sent you a secure verification link. Open it to complete KYC, then come back here."
+          accent
+          action={
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => requestLink.reset()}
+            >
+              <RefreshCw className="size-4" />
+              Resend link
+            </Button>
+          }
+        />
       ) : (
         <div className="space-y-4">
-          <div className="flex items-start gap-3 rounded-xl border bg-muted/40 p-4">
-            <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+          <div className="flex items-start gap-3 rounded-2xl border border-border bg-muted/40 p-4">
+            <ShieldCheck className="mt-0.5 size-5 shrink-0 text-brand" />
             <div className="text-sm">
-              <p className="font-medium">Encrypted &amp; private</p>
+              <p className="font-medium text-foreground">
+                Encrypted &amp; private
+              </p>
               <p className="text-muted-foreground">
                 Your data is encrypted and only used for identity verification.
               </p>
@@ -80,17 +87,50 @@ export default function OnboardingKycPage() {
 
           <Button
             onClick={() => requestLink.mutate()}
-            disabled={requestLink.isPending}
-            className="w-full"
+            loading={requestLink.isPending}
+            variant="brand"
             size="lg"
+            className="w-full"
           >
-            {requestLink.isPending && (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            )}
             Send verification link
           </Button>
         </div>
       )}
+    </div>
+  );
+}
+
+function StatusBlock({
+  icon,
+  title,
+  description,
+  action,
+  accent,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  action?: React.ReactNode;
+  accent?: boolean;
+}) {
+  return (
+    <div className="relative overflow-hidden rounded-2xl border border-border bg-muted/30 px-6 py-10 text-center">
+      {accent && (
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -top-20 left-1/2 size-48 -translate-x-1/2 rounded-full bg-brand/20 blur-3xl"
+        />
+      )}
+      <div className="relative flex flex-col items-center gap-3">
+        <div className="flex size-12 items-center justify-center rounded-full bg-brand/15 text-brand">
+          {icon}
+        </div>
+        <p className="font-semibold text-2xl text-foreground">{title}</p>
+        <p className="max-w-xs text-sm leading-relaxed text-muted-foreground">
+          {description}
+        </p>
+        {action && <div className="mt-2">{action}</div>}
+      </div>
     </div>
   );
 }

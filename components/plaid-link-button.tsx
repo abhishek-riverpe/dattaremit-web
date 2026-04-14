@@ -2,11 +2,11 @@
 
 import { useCallback, useEffect, useRef } from "react";
 import { usePlaidLink } from "react-plaid-link";
-import { Loader2, Building2 } from "lucide-react";
+import { Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePlaidLinkToken } from "@/hooks/api";
 
-const PLAID_TOKEN_TTL_MS = 4 * 60 * 60 * 1000; // 4 hours
+const PLAID_TOKEN_TTL_MS = 4 * 60 * 60 * 1000;
 
 interface PlaidLinkButtonProps {
   onSuccess: (publicToken: string, metadata: unknown) => void;
@@ -53,7 +53,6 @@ export function PlaidLinkButton({ onSuccess, onExit }: PlaidLinkButtonProps) {
     }
   }, [data?.plaid_token, ready, open, generateToken]);
 
-  // Auto-open Plaid Link when token becomes available and ready
   useEffect(() => {
     if (data?.plaid_token && ready && !hasOpened.current) {
       hasOpened.current = true;
@@ -62,13 +61,14 @@ export function PlaidLinkButton({ onSuccess, onExit }: PlaidLinkButtonProps) {
   }, [data?.plaid_token, ready, open]);
 
   return (
-    <Button onClick={handleClick} disabled={isPending} size="lg">
-      {isPending ? (
-        <Loader2 className="animate-spin" />
-      ) : (
-        <Building2 />
-      )}
-      {isPending ? "Connecting..." : "Link Bank Account"}
+    <Button
+      onClick={handleClick}
+      variant="brand"
+      size="lg"
+      loading={isPending}
+    >
+      {!isPending && <Building2 />}
+      {isPending ? "Connecting…" : "Link bank account"}
     </Button>
   );
 }
