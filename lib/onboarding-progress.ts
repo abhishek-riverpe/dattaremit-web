@@ -23,7 +23,11 @@ export function computeOnboardingState(account: Account | null | undefined): Onb
     !!u.lastName &&
     !!u.phoneNumber &&
     !!u.dateOfBirth;
-  const addressDone = (account?.addresses?.length ?? 0) > 0;
+  // Address row alone isn't enough — server only creates the Zynk payment
+  // entity once the address is fully accepted. If hasZynkEntity is false the
+  // address step did not really complete (e.g. entity creation failed).
+  const addressDone =
+    (account?.addresses?.length ?? 0) > 0 && !!account?.hasZynkEntity;
   const status = account?.accountStatus;
   const kycDone = status === "ACTIVE" || status === "PENDING";
 

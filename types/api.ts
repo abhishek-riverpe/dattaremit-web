@@ -113,6 +113,10 @@ export interface Account {
   indianKycStatus?: IndianKycStatus;
   hasBankAccount?: boolean;
   hasDepositAccount?: boolean;
+  /** True if the server has created a Zynk payment entity for this user.
+   *  Address submission triggers entity creation — if false, the address
+   *  step is not actually complete (entity creation failed or is pending). */
+  hasZynkEntity?: boolean;
   isOnWaitlist?: boolean;
   balance?: number;
 }
