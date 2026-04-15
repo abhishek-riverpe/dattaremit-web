@@ -1,143 +1,109 @@
 "use client";
 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Clock, Mail, RefreshCw, ShieldCheck } from "lucide-react";
-import { useAccount } from "@/hooks/api";
-import { requestOnboardingKyc } from "@/services/api";
+import { Mail, ShieldCheck } from "lucide-react";
+import { motion } from "motion/react";
+
 import { queryKeys } from "@/constants/query-keys";
+import { requestOnboardingKyc, ApiError } from "@/services/api";
 import { Button } from "@/components/ui/button";
-import { PageHeader } from "@/components/ui/page-header";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export default function OnboardingKycPage() {
-  const { data: account, isLoading } = useAccount();
+  const router = useRouter();
   const queryClient = useQueryClient();
+  const [modalOpen, setModalOpen] = useState(false);
+
   const requestLink = useMutation({
     mutationFn: requestOnboardingKyc,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.account });
+      setModalOpen(true);
     },
   });
 
-  const status = account?.accountStatus;
-  const inReview = status === "PENDING";
-
-  if (isLoading) {
-    return (
-      <div className="flex h-40 items-center justify-center">
-        <div className="relative flex size-10 items-center justify-center">
-          <span className="absolute inset-0 animate-ping rounded-full bg-brand/30" />
-          <span className="relative size-2 rounded-full bg-brand" />
-        </div>
-      </div>
-    );
-  }
+  const handleGotIt = async () => {
+    setModalOpen(false);
+    await queryClient.invalidateQueries({ queryKey: queryKeys.account });
+    router.replace("/");
+  };
 
   return (
-    <div className="space-y-7">
-      <PageHeader
-        title={
-          <>
-            Verify your{" "}
-            <span className="text-brand">
-              identity
-            </span>
-            .
-          </>
-        }
-        subtitle="A quick check unlocks every transfer feature."
-      />
+    <div className="flex flex-col items-center gap-6">
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.2, ease: [0.2, 0.8, 0.2, 1] }}
+        className="flex flex-col items-center gap-6"
+      >
+        <div className="flex size-20 items-center justify-center rounded-full bg-brand/15 text-brand">
+          <ShieldCheck className="size-12" />
+        </div>
 
-      {inReview ? (
-        <StatusBlock
-          icon={<Clock className="size-6" />}
-          title="Verification in progress"
-          description="We're reviewing your information. This usually completes in a few minutes — you'll be redirected automatically once it's approved."
-        />
-      ) : requestLink.isSuccess ? (
-        <StatusBlock
-          icon={<Mail className="size-6" />}
-          title="Check your inbox"
-          description="We sent you a secure verification link. Open it to complete KYC, then come back here."
-          accent
-          action={
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => requestLink.reset()}
-            >
-              <RefreshCw className="size-4" />
-              Resend link
-            </Button>
-          }
-        />
-      ) : (
-        <div className="space-y-4">
-          <div className="flex items-start gap-3 rounded-2xl border border-border bg-muted/40 p-4">
-            <ShieldCheck className="mt-0.5 size-5 shrink-0 text-brand" />
-            <div className="text-sm">
-              <p className="font-medium text-foreground">
-                Encrypted &amp; private
-              </p>
-              <p className="text-muted-foreground">
-                Your data is encrypted and only used for identity verification.
-              </p>
-            </div>
-          </div>
+        <div className="flex flex-col items-center gap-2 text-center">
+          <h1 className="font-semibold text-lg text-foreground">
+            Complete Your KYC
+          </h1>
+          <p className="max-w-md text-sm leading-6 text-muted-foreground">
+            To comply with financial regulations and keep your account secure,
+            we need to verify your identity. Tap the button below and
+            we&apos;ll send a verification link to your registered email.
+          </p>
+        </div>
 
-          {requestLink.isError && (
+        {requestLink.isError && (
+          <div className="w-full rounded-xl bg-destructive/10 p-3">
             <p className="text-sm text-destructive">
-              {requestLink.error instanceof Error
+              {requestLink.error instanceof ApiError
                 ? requestLink.error.message
                 : "Something went wrong. Please try again."}
             </p>
-          )}
+          </div>
+        )}
 
-          <Button
-            onClick={() => requestLink.mutate()}
-            loading={requestLink.isPending}
-            variant="brand"
-            size="lg"
-            className="w-full"
-          >
-            Send verification link
-          </Button>
-        </div>
-      )}
-    </div>
-  );
-}
+        <Button
+          variant="brand"
+          size="lg"
+          className="w-full"
+          onClick={() => requestLink.mutate()}
+          loading={requestLink.isPending}
+        >
+          Start KYC
+        </Button>
+      </motion.div>
 
-function StatusBlock({
-  icon,
-  title,
-  description,
-  action,
-  accent,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-  action?: React.ReactNode;
-  accent?: boolean;
-}) {
-  return (
-    <div className="relative overflow-hidden rounded-2xl border border-border bg-muted/30 px-6 py-10 text-center">
-      {accent && (
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute -top-20 left-1/2 size-48 -translate-x-1/2 rounded-full bg-brand/20 blur-3xl"
-        />
-      )}
-      <div className="relative flex flex-col items-center gap-3">
-        <div className="flex size-12 items-center justify-center rounded-full bg-brand/15 text-brand">
-          {icon}
-        </div>
-        <p className="font-semibold text-2xl text-foreground">{title}</p>
-        <p className="max-w-xs text-sm leading-relaxed text-muted-foreground">
-          {description}
-        </p>
-        {action && <div className="mt-2">{action}</div>}
-      </div>
+      <Dialog
+        open={modalOpen}
+        onOpenChange={(open) => {
+          if (!open) handleGotIt();
+        }}
+      >
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader className="items-center gap-4 text-center">
+            <div className="flex size-16 items-center justify-center rounded-full bg-brand/15 text-brand">
+              <Mail className="size-9" />
+            </div>
+            <DialogTitle className="text-center">KYC Link Sent!</DialogTitle>
+            <DialogDescription className="text-center">
+              Please check your email and complete the KYC verification to get
+              started.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="brand" className="w-full" onClick={handleGotIt}>
+              Got It
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
