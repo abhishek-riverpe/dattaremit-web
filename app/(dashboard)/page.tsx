@@ -7,7 +7,6 @@ import {
   CheckCircle2,
   ArrowRight,
   Send,
-  Users,
   Sparkles,
   Landmark,
 } from "lucide-react";
@@ -102,7 +101,7 @@ export default function HomePage() {
         </div>
       </Reveal>
 
-      <Stagger className="grid gap-4 sm:grid-cols-3">
+      <Stagger className="grid gap-4">
         <StaggerItem>
           <StatCard
             label="Live rate"
@@ -117,22 +116,6 @@ export default function HomePage() {
             hint="USD → INR · live from Yahoo Finance"
             accent
             icon={<Sparkles className="size-4" />}
-          />
-        </StaggerItem>
-        <StaggerItem>
-          <StatCard
-            label="Settlement"
-            value="60s"
-            hint="Median ACH push speed"
-            icon={<Send className="size-4" />}
-          />
-        </StaggerItem>
-        <StaggerItem>
-          <StatCard
-            label="Network"
-            value="140+"
-            hint="Countries supported"
-            icon={<Users className="size-4" />}
           />
         </StaggerItem>
       </Stagger>
