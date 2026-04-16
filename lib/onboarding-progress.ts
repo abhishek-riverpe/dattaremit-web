@@ -3,7 +3,11 @@ import type { Account } from "@/types/api";
 export type OnboardingStepKey = "referral" | "profile" | "address" | "kyc";
 export type IndicatorStepKey = Exclude<OnboardingStepKey, "referral">;
 
-export const ONBOARDING_STEPS: { key: IndicatorStepKey; label: string; href: string }[] = [
+export const ONBOARDING_STEPS: {
+  key: IndicatorStepKey;
+  label: string;
+  href: string;
+}[] = [
   { key: "profile", label: "Your profile", href: "/onboarding/profile" },
   { key: "address", label: "Your address", href: "/onboarding/address" },
   { key: "kyc", label: "Verify identity", href: "/onboarding/kyc" },
@@ -16,7 +20,12 @@ const ALL_STEP_HREFS: Record<OnboardingStepKey, string> = {
   kyc: "/onboarding/kyc",
 };
 
-const ALL_STEP_ORDER: OnboardingStepKey[] = ["referral", "profile", "address", "kyc"];
+const ALL_STEP_ORDER: OnboardingStepKey[] = [
+  "referral",
+  "profile",
+  "address",
+  "kyc",
+];
 
 export function stepIndex(key: OnboardingStepKey): number {
   return ALL_STEP_ORDER.indexOf(key);
@@ -39,21 +48,22 @@ export interface OnboardingState {
   completion: Record<IndicatorStepKey, boolean>;
 }
 
-export function computeOnboardingState(account: Account | null | undefined): OnboardingState {
+export function computeOnboardingState(
+  account: Account | null | undefined,
+): OnboardingState {
   const u = account?.user;
   const profileDone =
-    !!u &&
-    !!u.firstName &&
-    !!u.lastName &&
-    !!u.phoneNumber &&
-    !!u.dateOfBirth;
+    !!u && !!u.firstName && !!u.lastName && !!u.phoneNumber && !!u.dateOfBirth;
   // Address row alone isn't enough — server only creates the Zynk payment
   // entity once the address is fully accepted. If hasZynkEntity is false the
   // address step did not really complete (e.g. entity creation failed).
   const addressDone =
     (account?.addresses?.length ?? 0) > 0 && !!account?.hasZynkEntity;
   const status = account?.accountStatus;
-  const kycDone = status === "ACTIVE" || status === "PENDING";
+  // Only consider KYC done when status is ACTIVE (verified).
+  // PENDING means address was submitted but KYC verification not yet completed.
+  // User should still see the KYC onboarding screen to request/track verification.
+  const kycDone = status === "ACTIVE";
 
   let nextStep: OnboardingStepKey | null = null;
   if (!u) nextStep = "referral";
