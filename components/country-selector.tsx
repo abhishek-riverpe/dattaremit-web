@@ -17,6 +17,7 @@ interface CountrySelectorProps {
   placeholder?: string;
   error?: string;
   countries?: Country[];
+  disabled?: boolean;
 }
 
 export function CountrySelector({
@@ -26,11 +27,12 @@ export function CountrySelector({
   placeholder = "Select country",
   error,
   countries = COUNTRIES,
+  disabled,
 }: CountrySelectorProps) {
   return (
     <div className="space-y-2">
       {label && <Label>{label}</Label>}
-      <Select value={value || undefined} onValueChange={onSelect}>
+      <Select value={value || undefined} onValueChange={onSelect} disabled={disabled}>
         <SelectTrigger aria-invalid={!!error || undefined}>
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>

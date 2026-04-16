@@ -28,6 +28,7 @@ export default function OnboardingAddressPage() {
         submitLabel={{ create: "Continue", update: "Save & continue" }}
         onAfterSubmit={() => goToNext()}
         countries={COUNTRIES.filter((c) => c.code === "US")}
+        fixedCountry="US"
       />
     </Suspense>
   );

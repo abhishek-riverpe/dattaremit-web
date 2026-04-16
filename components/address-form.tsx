@@ -29,6 +29,7 @@ export interface AddressFormProps {
   description?: string;
   submitLabel?: { create?: string; update?: string };
   countries?: Country[];
+  fixedCountry?: string;
 }
 
 export function AddressForm({
@@ -40,6 +41,7 @@ export function AddressForm({
   description,
   submitLabel,
   countries,
+  fixedCountry,
 }: AddressFormProps = {}) {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -60,7 +62,7 @@ export function AddressForm({
   const form = useForm<AddressFormData>({
     resolver: yupResolver(addressSchema),
     defaultValues: {
-      country: "",
+      country: fixedCountry ?? "",
       state: "",
       city: "",
       addressLine1: "",
@@ -153,6 +155,7 @@ export function AddressForm({
                 placeholder="Select country"
                 error={form.formState.errors.country?.message}
                 countries={countries}
+                disabled={!!fixedCountry}
               />
             </FormItem>
           )}
