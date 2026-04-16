@@ -1,22 +1,31 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   CheckCircle2,
   Clock,
   Mail,
-  RefreshCw,
   ShieldCheck,
   XCircle,
 } from "lucide-react";
 
+import { queryKeys } from "@/constants/query-keys";
 import { requestOnboardingKyc } from "@/services/api";
 import { useAccount } from "@/hooks/api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageHeader } from "@/components/ui/page-header";
 
@@ -36,8 +45,22 @@ const STATUS_META: Record<
 
 export default function KycPage() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { data: account, isLoading } = useAccount();
-  const requestLink = useMutation({ mutationFn: requestOnboardingKyc });
+  const [modalOpen, setModalOpen] = useState(false);
+
+  const requestLink = useMutation({
+    mutationFn: requestOnboardingKyc,
+    onSuccess: () => {
+      setModalOpen(true);
+    },
+  });
+
+  const handleGotIt = async () => {
+    setModalOpen(false);
+    await queryClient.invalidateQueries({ queryKey: queryKeys.account });
+    router.replace("/");
+  };
 
   if (isLoading) {
     return (
@@ -88,63 +111,43 @@ export default function KycPage() {
           </Badge>
         </div>
         <div className="space-y-4 p-6">
-          {requestLink.isSuccess ? (
-            <div className="flex flex-col items-center gap-3 py-4 text-center">
-              <div className="flex size-12 items-center justify-center rounded-full bg-success/15 text-success">
-                <Mail className="size-5" />
-              </div>
-              <p className="text-sm text-foreground">
-                We sent a verification link to your email.
-              </p>
-              <Button
-                variant="outline"
-                onClick={() => requestLink.reset()}
-              >
-                <RefreshCw className="size-4" />
-                Resend link
-              </Button>
-            </div>
+          {canStartPrimary ? (
+            <p className="text-sm text-muted-foreground">
+              Click below to send a secure verification link to your email.
+            </p>
+          ) : status === "PENDING" ? (
+            <p className="text-sm text-muted-foreground">
+              Your KYC is under review. We&apos;ll email you when a decision
+              is made.
+            </p>
           ) : (
-            <>
-              {canStartPrimary ? (
-                <p className="text-sm text-muted-foreground">
-                  Click below to send a secure verification link to your email.
-                </p>
-              ) : status === "PENDING" ? (
-                <p className="text-sm text-muted-foreground">
-                  Your KYC is under review. We&apos;ll email you when a decision
-                  is made.
-                </p>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  Your primary KYC is verified.
-                </p>
-              )}
-              {requestLink.isError && (
-                <p className="text-sm text-destructive">
-                  {requestLink.error instanceof Error
-                    ? requestLink.error.message
-                    : "Something went wrong."}
-                </p>
-              )}
-              <div className="flex gap-2">
-                {canStartPrimary && (
-                  <Button
-                    variant="brand"
-                    onClick={() => requestLink.mutate()}
-                    loading={requestLink.isPending}
-                  >
-                    Send verification link
-                  </Button>
-                )}
-                {status === "ACTIVE" && (
-                  <Button variant="brand" onClick={() => router.push("/")}>
-                    Go to home
-                  </Button>
-                )}
-              </div>
-            </>
+            <p className="text-sm text-muted-foreground">
+              Your primary KYC is verified.
+            </p>
           )}
+          {requestLink.isError && (
+            <p className="text-sm text-destructive">
+              {requestLink.error instanceof Error
+                ? requestLink.error.message
+                : "Something went wrong."}
+            </p>
+          )}
+          <div className="flex gap-2">
+            {canStartPrimary && (
+              <Button
+                variant="brand"
+                onClick={() => requestLink.mutate()}
+                loading={requestLink.isPending}
+              >
+                Send verification link
+              </Button>
+            )}
+            {status === "ACTIVE" && (
+              <Button variant="brand" onClick={() => router.push("/")}>
+                Go to home
+              </Button>
+            )}
+          </div>
         </div>
       </Card>
 
@@ -204,6 +207,31 @@ export default function KycPage() {
           )}
         </div>
       </Card>
+
+      <Dialog
+        open={modalOpen}
+        onOpenChange={(open) => {
+          if (!open) handleGotIt();
+        }}
+      >
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader className="items-center gap-4 text-center">
+            <div className="flex size-16 items-center justify-center rounded-full bg-brand/15 text-brand">
+              <Mail className="size-9" />
+            </div>
+            <DialogTitle className="text-center">KYC Link Sent!</DialogTitle>
+            <DialogDescription className="text-center">
+              Please check your email and complete the KYC verification to get
+              started.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="brand" className="w-full" onClick={handleGotIt}>
+              Got It
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
