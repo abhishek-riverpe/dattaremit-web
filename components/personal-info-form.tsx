@@ -30,7 +30,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { TextField } from "@/components/ui/text-field";
 import { PageHeader } from "@/components/ui/page-header";
 import { PhoneInput } from "@/components/phone-input";
-import { CountrySelector } from "@/components/country-selector";
 
 export interface PersonalInfoFormProps {
   nextHrefOnCreate?: string;
@@ -71,7 +70,6 @@ export function PersonalInfoForm({
       phoneNumberPrefix: "+1",
       phoneNumber: "",
       dateOfBirth: "",
-      nationality: "",
     },
   });
 
@@ -88,8 +86,6 @@ export function PersonalInfoForm({
       phoneNumberPrefix: u.phoneNumberPrefix || "+880",
       phoneNumber: u.phoneNumber || "",
       dateOfBirth: u.dateOfBirth ? u.dateOfBirth.substring(0, 10) : "",
-      nationality:
-        ((u as Record<string, unknown>).nationality as string) || "",
     });
   }, [account, form]);
 
@@ -102,7 +98,7 @@ export function PersonalInfoForm({
           phoneNumberPrefix: data.phoneNumberPrefix,
           phoneNumber: data.phoneNumber,
           dateOfBirth: data.dateOfBirth,
-          nationality: data.nationality,
+          nationality: "US",
         });
       } else {
         const referralCode = localStorage.getItem("referral_code") || undefined;
@@ -116,7 +112,7 @@ export function PersonalInfoForm({
           phoneNumberPrefix: data.phoneNumberPrefix,
           phoneNumber: data.phoneNumber,
           dateOfBirth: data.dateOfBirth,
-          nationality: data.nationality,
+          nationality: "US",
           referredByCode: referralCode,
         });
 
@@ -246,22 +242,6 @@ export function PersonalInfoForm({
                 />
               </FormControl>
               <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="nationality"
-          render={({ field }) => (
-            <FormItem>
-              <CountrySelector
-                label="Nationality"
-                value={field.value}
-                onSelect={field.onChange}
-                placeholder="Select nationality"
-                error={form.formState.errors.nationality?.message}
-              />
             </FormItem>
           )}
         />
