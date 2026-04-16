@@ -6,12 +6,7 @@ import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { addressSchema, type AddressFormData } from "@/schemas/address.schema";
 import { useAccount } from "@/hooks/api";
-import {
-  createAddress,
-  updateAddress,
-  createZynkEntity,
-  getAccount,
-} from "@/services/api";
+import { submitOnboardingAddress, getAccount } from "@/services/api";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/constants/query-keys";
 import { toast } from "sonner";
@@ -87,35 +82,23 @@ export function AddressForm({
 
   const onSubmit = async (data: AddressFormData) => {
     try {
-      const payload = {
-        type: "PRESENT" as const,
+      await submitOnboardingAddress({
+        type: "PRESENT",
         addressLine1: data.addressLine1,
         city: data.city,
         state: data.state,
         country: data.country,
         postalCode: data.postalCode,
-      };
-
-      if (existingAddress) {
-        await updateAddress(existingAddress.id, payload);
-      } else {
-        await createAddress(payload);
-      }
+      });
 
       await queryClient.invalidateQueries({
         queryKey: queryKeys.addresses.all,
       });
-
-      const freshAccount = await queryClient.fetchQuery({
+      await queryClient.fetchQuery({
         queryKey: queryKeys.account,
         queryFn: getAccount,
         staleTime: 0,
       });
-
-      if (!freshAccount?.hasZynkEntity) {
-        await createZynkEntity();
-        await queryClient.invalidateQueries({ queryKey: queryKeys.account });
-      }
 
       toast.success(
         existingAddress ? "Address updated" : "Address saved successfully",
