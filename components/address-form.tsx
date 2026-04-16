@@ -6,8 +6,13 @@ import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { addressSchema, type AddressFormData } from "@/schemas/address.schema";
 import { useAccount } from "@/hooks/api";
-import { submitOnboardingAddress, createZynkEntity } from "@/services/api";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  createAddress,
+  updateAddress,
+  createZynkEntity,
+  getAccount,
+} from "@/services/api";
+import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/constants/query-keys";
 import { toast } from "sonner";
 
@@ -51,14 +56,6 @@ export function AddressForm({
     (a) => a.type === "PRESENT",
   );
 
-  const addressMutation = useMutation({
-    mutationFn: submitOnboardingAddress,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.addresses.all });
-      queryClient.invalidateQueries({ queryKey: queryKeys.account });
-    },
-  });
-
   const form = useForm<AddressFormData>({
     resolver: yupResolver(addressSchema),
     defaultValues: {
@@ -90,20 +87,39 @@ export function AddressForm({
 
   const onSubmit = async (data: AddressFormData) => {
     try {
-      await addressMutation.mutateAsync({
-        type: "PRESENT",
+      const payload = {
+        type: "PRESENT" as const,
         addressLine1: data.addressLine1,
         city: data.city,
         state: data.state,
         country: data.country,
         postalCode: data.postalCode,
-      });
+      };
 
-      if (!account?.hasZynkEntity) {
-        await createZynkEntity();
+      if (existingAddress) {
+        await updateAddress(existingAddress.id, payload);
+      } else {
+        await createAddress(payload);
       }
 
-      toast.success("Address saved successfully");
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.addresses.all,
+      });
+
+      const freshAccount = await queryClient.fetchQuery({
+        queryKey: queryKeys.account,
+        queryFn: getAccount,
+        staleTime: 0,
+      });
+
+      if (!freshAccount?.hasZynkEntity) {
+        await createZynkEntity();
+        await queryClient.invalidateQueries({ queryKey: queryKeys.account });
+      }
+
+      toast.success(
+        existingAddress ? "Address updated" : "Address saved successfully",
+      );
 
       if (onAfterSubmit) {
         await onAfterSubmit(existingAddress ? "update" : "create");
@@ -194,7 +210,7 @@ export function AddressForm({
           variant="brand"
           size="lg"
           className="w-full"
-          loading={addressMutation.isPending}
+          loading={form.formState.isSubmitting}
         >
           {submitText}
         </Button>
