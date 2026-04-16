@@ -99,7 +99,9 @@ export function AddressForm({
         postalCode: data.postalCode,
       });
 
-      await createZynkEntity();
+      if (!account?.hasZynkEntity) {
+        await createZynkEntity();
+      }
 
       toast.success("Address saved successfully");
 
