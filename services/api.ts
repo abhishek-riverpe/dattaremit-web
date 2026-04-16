@@ -67,6 +67,23 @@ const api = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
+// Server endpoints wrapped with `withIdempotency` require a 16-255 char
+// `idempotency-key` header matching /^[a-zA-Z0-9\-_]+$/. Generate a UUID
+// (36 chars, hyphens only) when callers don't supply one.
+function genIdempotencyKey(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  // Fallback for older runtimes.
+  return `${Date.now()}-${Math.random().toString(36).slice(2)}-${Math.random()
+    .toString(36)
+    .slice(2)}`;
+}
+
+function idempotencyHeaders(key?: string): { "idempotency-key": string } {
+  return { "idempotency-key": key ?? genIdempotencyKey() };
+}
+
 // Request interceptor: attach auth token
 api.interceptors.request.use(async (config) => {
   if (tokenGetter) {
@@ -146,7 +163,7 @@ export const requestOnboardingKyc = (): Promise<{ message: string }> =>
 // ── Zynk (KYC) ──
 export const createZynkEntity = (idempotencyKey?: string): Promise<User> =>
   api.post("/zynk/entities", undefined, {
-    headers: idempotencyKey ? { "idempotency-key": idempotencyKey } : {},
+    headers: idempotencyHeaders(idempotencyKey),
   });
 
 export const startKyc = (): Promise<ZynkKycData> =>
@@ -158,13 +175,21 @@ export const generatePlaidLinkToken = (): Promise<PlaidLinkToken> =>
 
 // ── Zynk (External Account) ──
 export const addExternalAccount = (
-  data: AddExternalAccountPayload
-): Promise<User> => api.post("/zynk/external-account", data);
+  data: AddExternalAccountPayload,
+  idempotencyKey?: string
+): Promise<User> =>
+  api.post("/zynk/external-account", data, {
+    headers: idempotencyHeaders(idempotencyKey),
+  });
 
 // ── Zynk (Deposit Account) ──
 export const addDepositAccount = (
-  data: AddDepositAccountPayload
-): Promise<User> => api.post("/zynk/deposit-account", data);
+  data: AddDepositAccountPayload,
+  idempotencyKey?: string
+): Promise<User> =>
+  api.post("/zynk/deposit-account", data, {
+    headers: idempotencyHeaders(idempotencyKey),
+  });
 
 // ── Activity ──
 export const getActivities = (
@@ -181,8 +206,12 @@ export const getRecipient = (id: string): Promise<Recipient> =>
   api.get(`/recipients/${id}`);
 
 export const createRecipient = (
-  data: CreateRecipientPayload
-): Promise<Recipient> => api.post("/recipients", data);
+  data: CreateRecipientPayload,
+  idempotencyKey?: string
+): Promise<Recipient> =>
+  api.post("/recipients", data, {
+    headers: idempotencyHeaders(idempotencyKey),
+  });
 
 export const updateRecipient = (
   id: string,
@@ -191,8 +220,12 @@ export const updateRecipient = (
 
 export const addRecipientBank = (
   id: string,
-  data: AddRecipientBankPayload
-): Promise<Recipient> => api.post(`/recipients/${id}/bank`, data);
+  data: AddRecipientBankPayload,
+  idempotencyKey?: string
+): Promise<Recipient> =>
+  api.post(`/recipients/${id}/bank`, data, {
+    headers: idempotencyHeaders(idempotencyKey),
+  });
 
 export const resendRecipientKyc = (id: string): Promise<void> =>
   api.post(`/recipients/${id}/resend-kyc`);
@@ -203,7 +236,7 @@ export const sendMoney = (
   idempotencyKey?: string
 ): Promise<SendMoneyResponse> =>
   api.post("/transfers/send", data, {
-    headers: idempotencyKey ? { "idempotency-key": idempotencyKey } : {},
+    headers: idempotencyHeaders(idempotencyKey),
   });
 
 export const sendToSelf = (
@@ -211,7 +244,7 @@ export const sendToSelf = (
   idempotencyKey?: string
 ): Promise<SendMoneyResponse> =>
   api.post("/transfers/send-to-self", data, {
-    headers: idempotencyKey ? { "idempotency-key": idempotencyKey } : {},
+    headers: idempotencyHeaders(idempotencyKey),
   });
 
 // ── Notifications ──
