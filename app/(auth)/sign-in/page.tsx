@@ -166,6 +166,14 @@ export default function SignInPage() {
             placeholder="Enter your password"
             autoComplete="current-password"
           />
+          <div className="flex justify-end -mt-2">
+            <Link
+              href="/forgot-password"
+              className="text-sm text-muted-foreground underline decoration-brand/30 underline-offset-4 transition-colors hover:text-foreground hover:decoration-brand"
+            >
+              Forgot password?
+            </Link>
+          </div>
           <Button
             type="submit"
             variant="brand"

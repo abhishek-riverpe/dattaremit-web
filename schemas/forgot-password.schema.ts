@@ -1,0 +1,22 @@
+import * as yup from "yup";
+
+export const forgotPasswordSchema = yup.object({
+  email: yup
+    .string()
+    .email("Please enter a valid email")
+    .required("Email is required"),
+  password: yup
+    .string()
+    .required("Password is required")
+    .min(8, "Password must be at least 8 characters")
+    .matches(/[a-z]/, "Password must contain a lowercase letter")
+    .matches(/[A-Z]/, "Password must contain an uppercase letter")
+    .matches(/[0-9]/, "Password must contain a digit")
+    .matches(/[^a-zA-Z0-9]/, "Password must contain a special character"),
+  confirmPassword: yup
+    .string()
+    .required("Please confirm your password")
+    .oneOf([yup.ref("password")], "Passwords must match"),
+});
+
+export type ForgotPasswordFormData = yup.InferType<typeof forgotPasswordSchema>;
