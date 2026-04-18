@@ -15,7 +15,7 @@ export const depositAccountSchema = yup.object({
   branchName: yup.string().trim().required("Branch name is required"),
   bankAccountType: yup
     .string()
-    .oneOf(["Current", "Savings"], "Account type must be Current or Savings")
+    .oneOf(["SAVINGS", "CURRENT"], "Account type must be Savings or Current")
     .required("Account type is required"),
   phoneNumber: yup
     .string()

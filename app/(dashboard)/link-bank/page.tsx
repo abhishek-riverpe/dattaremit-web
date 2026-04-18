@@ -46,8 +46,11 @@ export default function LinkBankPage() {
       return;
     }
 
-    const accountName =
-      accounts?.[0]?.name || meta?.institution?.name || "external_account";
+    const selectedName = accounts?.[0]?.name ?? "Account";
+    const institutionName = meta?.institution?.name;
+    const accountName = institutionName
+      ? `${institutionName} - ${selectedName}`
+      : selectedName;
 
     addExternal.mutate(
       {

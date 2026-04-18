@@ -89,8 +89,8 @@ export default function ReceiveBankPage() {
         title="Indian KYC required"
         description={
           indianKycStatus === "PENDING"
-            ? "Your Indian KYC is being reviewed. You can add an Indian bank account once it's approved."
-            : "Complete Indian KYC verification before adding an Indian bank account."
+            ? "Your Indian KYC verification is being reviewed. You'll be able to add your Indian bank account once it's approved."
+            : "Complete Indian KYC verification to send money to your own Indian bank account."
         }
         cta={
           indianKycStatus !== "PENDING" ? (
@@ -175,8 +175,8 @@ export default function ReceiveBankPage() {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="Savings">Savings</SelectItem>
-                      <SelectItem value="Current">Current</SelectItem>
+                      <SelectItem value="SAVINGS">Savings</SelectItem>
+                      <SelectItem value="CURRENT">Current</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />

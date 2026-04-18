@@ -43,6 +43,14 @@ const STATUS_META: Record<
   REJECTED: { label: "Rejected", variant: "destructive", icon: XCircle },
 };
 
+const INDIAN_STATUS_LABEL: Record<string, string> = {
+  NONE: "Not started",
+  PENDING: "In review",
+  APPROVED: "Verified",
+  REJECTED: "Rejected",
+  FAILED: "Failed",
+};
+
 export default function KycPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -75,6 +83,7 @@ export default function KycPage() {
   const meta = STATUS_META[status] ?? STATUS_META.INITIAL;
   const StatusIcon = meta.icon;
   const indianStatus = account?.indianKycStatus ?? "NONE";
+  const indianStatusLabel = INDIAN_STATUS_LABEL[indianStatus] ?? "Not started";
   const canStartPrimary = status === "INITIAL" || status === "REJECTED";
 
   return (
@@ -186,7 +195,7 @@ export default function KycPage() {
                     : "outline"
             }
           >
-            {indianStatus}
+            {indianStatusLabel}
           </Badge>
         </div>
         <div className="p-6">
