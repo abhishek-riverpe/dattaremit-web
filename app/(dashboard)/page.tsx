@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
-  Building2,
   CheckCircle2,
   ArrowRight,
   Send,
@@ -142,42 +141,6 @@ export default function HomePage() {
               tint={hasSendAccount ? "success" : "warning"}
             />
           </div>
-        </Reveal>
-      )}
-
-      {account?.accountStatus === "ACTIVE" && !bothLinked && (
-        <Reveal direction="up" delay={0.1}>
-          <Card
-            variant="elevated"
-            className="relative overflow-hidden border-brand/20"
-          >
-            <div
-              aria-hidden="true"
-              className="pointer-events-none absolute -right-12 -top-12 size-48 rounded-full bg-brand/15 blur-3xl"
-            />
-            <div className="relative flex flex-col gap-5 p-6 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-start gap-4">
-                <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-brand/15 text-brand">
-                  <Building2 className="size-5" />
-                </div>
-                <div className="flex flex-col gap-1">
-                  <h2 className="font-semibold text-2xl text-foreground">
-                    Link your bank
-                  </h2>
-                  <p className="max-w-md text-sm text-muted-foreground">
-                    Connect a US account and add your Indian bank to receive
-                    funds. Two minutes, then you&apos;re sending.
-                  </p>
-                </div>
-              </div>
-              <Button asChild variant="brand" size="lg">
-                <Link href="/link-bank">
-                  Get started
-                  <ArrowRight />
-                </Link>
-              </Button>
-            </div>
-          </Card>
         </Reveal>
       )}
 
