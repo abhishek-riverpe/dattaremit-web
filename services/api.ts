@@ -268,6 +268,21 @@ export const deleteNotification = (id: string): Promise<void> =>
 export const getPublicKey = (): Promise<PublicKeyResponse> =>
   api.get("/crypto/public-key");
 
+// ── Email availability ──
+// Public endpoint — used by the sign-up form before calling Clerk so a
+// duplicate email is caught before an unrecoverable Clerk account is
+// created.
+export const checkUserEmailAvailable = (
+  email: string
+): Promise<{ available: boolean }> =>
+  api.get("/check-email", { params: { email } });
+
+// Authed — used by the recipient form; scope is per-user.
+export const checkRecipientEmailAvailable = (
+  email: string
+): Promise<{ available: boolean }> =>
+  api.get("/recipients/check-email", { params: { email } });
+
 // ── Zynk (Indian KYC) ──
 // Plaintext variant — kept for dev/testing against plaintext endpoint. Prefer
 // submitIndianKycEncrypted in production. Server accepts either shape.

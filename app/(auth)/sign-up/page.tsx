@@ -16,6 +16,7 @@ import { Form } from "@/components/ui/form";
 import { TextField } from "@/components/ui/text-field";
 import { Button } from "@/components/ui/button";
 import { OAuthButtons } from "@/components/oauth-buttons";
+import { useCheckEmailAvailability } from "@/hooks/api";
 
 export default function SignUpPage() {
   const { isLoaded, signUp } = useSignUp();
@@ -29,8 +30,16 @@ export default function SignUpPage() {
     defaultValues: { email: "", password: "", confirmPassword: "" },
   });
 
+  const emailValue = form.watch("email");
+  const { available, isChecking } = useCheckEmailAvailability(
+    emailValue ?? "",
+    "user",
+  );
+  const emailTaken = available === false;
+
   const onSubmit = async (data: SignUpFormData) => {
     if (!isLoaded) return;
+    if (emailTaken) return;
     setLoading(true);
 
     try {
@@ -82,14 +91,32 @@ export default function SignUpPage() {
     >
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <TextField
-            control={form.control}
-            name="email"
-            label="Email"
-            type="email"
-            placeholder="you@example.com"
-            autoComplete="email"
-          />
+          <div>
+            <TextField
+              control={form.control}
+              name="email"
+              label="Email"
+              type="email"
+              placeholder="you@example.com"
+              autoComplete="email"
+            />
+            {emailTaken && (
+              <p className="mt-1.5 text-sm text-destructive">
+                An account with this email already exists.{" "}
+                <Link
+                  href="/sign-in"
+                  className="font-medium underline underline-offset-2 hover:no-underline"
+                >
+                  Sign in instead?
+                </Link>
+              </p>
+            )}
+            {isChecking && !emailTaken && (
+              <p className="mt-1.5 text-sm text-muted-foreground">
+                Checking availability…
+              </p>
+            )}
+          </div>
           <TextField
             control={form.control}
             name="password"
@@ -113,6 +140,7 @@ export default function SignUpPage() {
             size="lg"
             className="w-full"
             loading={loading}
+            disabled={emailTaken}
           >
             Create account
           </Button>

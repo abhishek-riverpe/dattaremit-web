@@ -31,3 +31,6 @@ export { useDeleteNotification } from "./use-delete-notification";
 
 // Indian KYC
 export { useSubmitIndianKyc } from "./use-submit-indian-kyc";
+
+// Email availability
+export { useCheckEmailAvailability } from "./use-check-email-availability";

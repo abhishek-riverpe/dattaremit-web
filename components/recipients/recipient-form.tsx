@@ -19,12 +19,19 @@ import { Button } from "@/components/ui/button";
 import { DateSelect } from "@/components/ui/date-select";
 import { TextField } from "@/components/ui/text-field";
 import { PhoneInput } from "@/components/phone-input";
+import { useCheckEmailAvailability } from "@/hooks/api";
 
 export interface RecipientFormProps {
   defaultValues?: Partial<RecipientFormData>;
   submitLabel?: string;
   onSubmit: (data: RecipientFormData) => Promise<void> | void;
   submitting?: boolean;
+  /**
+   * The recipient's current email (for edit flows). When the entered email
+   * equals this value, the availability check is skipped so the user isn't
+   * blocked from saving unrelated edits.
+   */
+  originalEmail?: string;
 }
 
 export function RecipientForm({
@@ -32,6 +39,7 @@ export function RecipientForm({
   submitLabel = "Save recipient",
   onSubmit,
   submitting,
+  originalEmail,
 }: RecipientFormProps) {
   const form = useForm<RecipientFormData>({
     resolver: yupResolver(
@@ -53,6 +61,16 @@ export function RecipientForm({
     },
   });
 
+  const emailValue = form.watch("email") ?? "";
+  const isUnchanged =
+    !!originalEmail &&
+    emailValue.trim().toLowerCase() === originalEmail.trim().toLowerCase();
+  const { available, isChecking } = useCheckEmailAvailability(
+    isUnchanged ? "" : emailValue,
+    "recipient",
+  );
+  const emailTaken = !isUnchanged && available === false;
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
@@ -71,13 +89,25 @@ export function RecipientForm({
           />
         </div>
 
-        <TextField
-          control={form.control}
-          name="email"
-          label="Email"
-          type="email"
-          placeholder="asha@example.com"
-        />
+        <div>
+          <TextField
+            control={form.control}
+            name="email"
+            label="Email"
+            type="email"
+            placeholder="asha@example.com"
+          />
+          {emailTaken && (
+            <p className="mt-1.5 text-sm text-destructive">
+              You already have a recipient with this email.
+            </p>
+          )}
+          {isChecking && !emailTaken && (
+            <p className="mt-1.5 text-sm text-muted-foreground">
+              Checking availability…
+            </p>
+          )}
+        </div>
 
         <FormField
           control={form.control}
@@ -151,6 +181,7 @@ export function RecipientForm({
           size="lg"
           className="w-full"
           loading={submitting}
+          disabled={emailTaken}
         >
           {submitLabel}
         </Button>

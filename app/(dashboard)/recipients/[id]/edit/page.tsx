@@ -53,6 +53,7 @@ export default function EditRecipientPage({
           <RecipientForm
             submitLabel="Save changes"
             submitting={updateRecipient.isPending}
+            originalEmail={recipient.email}
             defaultValues={{
               firstName: recipient.firstName,
               lastName: recipient.lastName,
