@@ -119,30 +119,28 @@ export default function HomePage() {
         </StaggerItem>
       </Stagger>
 
-      {!bothLinked && (
-        <Reveal direction="up" delay={0.05}>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <QuickAction
-              icon={<Send className="size-5" />}
-              label="Send money"
-              href="/send"
-              tint="brand"
-            />
-            <QuickAction
-              icon={
-                hasSendAccount ? (
-                  <CheckCircle2 className="size-5" />
-                ) : (
-                  <Landmark className="size-5" />
-                )
-              }
-              label={hasSendAccount ? "Bank connected" : "Connect bank"}
-              href="/link-bank"
-              tint={hasSendAccount ? "success" : "warning"}
-            />
-          </div>
-        </Reveal>
-      )}
+      <Reveal direction="up" delay={0.05}>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <QuickAction
+            icon={<Send className="size-5" />}
+            label="Send"
+            href="/send"
+            tint="brand"
+          />
+          <QuickAction
+            icon={
+              hasSendAccount ? (
+                <CheckCircle2 className="size-5" />
+              ) : (
+                <Landmark className="size-5" />
+              )
+            }
+            label={hasSendAccount ? "Bank Connected" : "Connect Bank"}
+            href="/link-bank"
+            tint={hasSendAccount ? "success" : "warning"}
+          />
+        </div>
+      </Reveal>
 
       {bothLinked && (
         <Reveal direction="up" delay={0.1}>

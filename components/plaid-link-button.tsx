@@ -11,9 +11,14 @@ const PLAID_TOKEN_TTL_MS = 4 * 60 * 60 * 1000;
 interface PlaidLinkButtonProps {
   onSuccess: (publicToken: string, metadata: unknown) => void;
   onExit?: () => void;
+  label?: string;
 }
 
-export function PlaidLinkButton({ onSuccess, onExit }: PlaidLinkButtonProps) {
+export function PlaidLinkButton({
+  onSuccess,
+  onExit,
+  label = "Link bank account",
+}: PlaidLinkButtonProps) {
   const { mutate: generateToken, data, isPending } = usePlaidLinkToken();
   const tokenCreatedAt = useRef<number | null>(null);
   const hasOpened = useRef(false);
@@ -68,7 +73,7 @@ export function PlaidLinkButton({ onSuccess, onExit }: PlaidLinkButtonProps) {
       loading={isPending}
     >
       {!isPending && <Building2 />}
-      {isPending ? "Connecting…" : "Link bank account"}
+      {isPending ? "Connecting…" : label}
     </Button>
   );
 }

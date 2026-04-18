@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm, type Resolver } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { ArrowLeft, ArrowRight, Landmark, Send, UserPlus } from "lucide-react";
@@ -23,6 +23,8 @@ import { PageHeader } from "@/components/ui/page-header";
 import { EmptyState } from "@/components/ui/empty-state";
 import { RecipientCard } from "@/components/recipients/recipient-card";
 import { TransferResult } from "@/components/transfer/transfer-result";
+import { SelfTransferCard } from "@/components/transfer/self-transfer-card";
+import { AddRecipientWarningModal } from "@/components/transfer/add-recipient-warning-modal";
 import { KycGate } from "@/components/kyc-gate";
 import { useStepUp } from "@/hooks/use-step-up";
 import type { Recipient } from "@/types/recipient";
@@ -32,6 +34,7 @@ type Step = "select" | "amount" | "review" | "result";
 const STEP_ORDER: Step[] = ["select", "amount", "review", "result"];
 
 export default function SendPage() {
+  const router = useRouter();
   const search = useSearchParams();
   const preselectedId = search.get("recipient");
   const { data: account } = useAccount();
@@ -48,6 +51,7 @@ export default function SendPage() {
   const [note, setNote] = useState("");
   const [transactionId, setTransactionId] = useState<string>();
   const [sendError, setSendError] = useState<string | null>(null);
+  const [warningOpen, setWarningOpen] = useState(false);
   const [idempotencyKey, setIdempotencyKey] = useState<string>(() =>
     generateIdempotencyKey(),
   );
@@ -202,6 +206,22 @@ export default function SendPage() {
               subtitle="Pick a verified recipient. They&apos;ll receive funds in their linked bank."
             />
 
+            <div className="space-y-3">
+              <SelfTransferCard
+                indianKycStatus={account?.indianKycStatus ?? "NONE"}
+                hasDepositAccount={!!account?.user?.zynkDepositAccountId}
+              />
+              <Button
+                variant="outline"
+                size="lg"
+                className="w-full"
+                onClick={() => setWarningOpen(true)}
+              >
+                <UserPlus />
+                Add Recipient
+              </Button>
+            </div>
+
             {isLoading && (
               <div className="space-y-3">
                 {Array.from({ length: 3 }).map((_, i) => (
@@ -213,13 +233,8 @@ export default function SendPage() {
             {!isLoading && (!eligible || eligible.length === 0) && (
               <EmptyState
                 icon={<UserPlus className="size-5" />}
-                title="No one ready yet"
-                description="Add a recipient and complete their bank details before you can send."
-                action={
-                  <Button asChild variant="brand">
-                    <Link href="/recipients/new">Add recipient</Link>
-                  </Button>
-                }
+                title="No recipients yet"
+                description="Add one to get started."
               />
             )}
 
@@ -239,6 +254,15 @@ export default function SendPage() {
                 ))}
               </div>
             )}
+
+            <AddRecipientWarningModal
+              open={warningOpen}
+              onOpenChange={setWarningOpen}
+              onConfirm={() => {
+                setWarningOpen(false);
+                router.push("/recipients/new");
+              }}
+            />
           </motion.div>
         )}
 

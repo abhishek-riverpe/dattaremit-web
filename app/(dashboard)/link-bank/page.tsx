@@ -136,16 +136,19 @@ export default function LinkBankPage() {
                 </div>
               )}
 
-              {user?.zynkExternalAccountId ? (
-                <p className="text-sm font-medium text-success">
-                  Account linked
-                </p>
-              ) : addExternal.isPending ? (
+              {addExternal.isPending ? (
                 <Button variant="brand" size="lg" loading>
                   Setting up account…
                 </Button>
               ) : (
-                <PlaidLinkButton onSuccess={handlePlaidSuccess} />
+                <PlaidLinkButton
+                  onSuccess={handlePlaidSuccess}
+                  label={
+                    user?.zynkExternalAccountId
+                      ? "Connect Different Bank Account"
+                      : "Connect Bank Account"
+                  }
+                />
               )}
 
               {addExternal.isError && (
