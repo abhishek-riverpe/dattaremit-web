@@ -184,6 +184,7 @@ export default function LinkBankPage() {
               ) : (
                 <Button
                   variant="brand"
+                  size="lg"
                   onClick={() => router.push("/link-bank/receive")}
                 >
                   Add Indian bank
@@ -226,7 +227,7 @@ function SetupCard({
     <Card
       variant="elevated"
       className={cn(
-        "relative overflow-hidden p-6",
+        "relative h-full overflow-hidden p-6",
         done && "border-success/30",
       )}
     >
@@ -237,7 +238,7 @@ function SetupCard({
           done ? "bg-success/15" : "bg-brand/10",
         )}
       />
-      <div className="relative flex flex-col gap-5">
+      <div className="relative flex h-full flex-col gap-5">
         <div className="flex items-start justify-between gap-3">
           <div
             className={cn(
@@ -255,7 +256,9 @@ function SetupCard({
           <h3 className="font-semibold text-xl text-foreground">{title}</h3>
           <p className="text-sm text-muted-foreground">{description}</p>
         </div>
-        <div className="flex flex-col items-stretch gap-3">{children}</div>
+        <div className="mt-auto flex flex-col items-stretch gap-3">
+          {children}
+        </div>
       </div>
     </Card>
   );
