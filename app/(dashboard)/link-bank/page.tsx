@@ -76,8 +76,9 @@ export default function LinkBankPage() {
     );
   }
 
-  const allLinked =
-    !!user?.zynkExternalAccountId && !!user?.zynkDepositAccountId;
+  const hasBankAccount = !!account?.hasBankAccount;
+  const hasDepositAccount = !!account?.hasDepositAccount;
+  const allLinked = hasBankAccount && hasDepositAccount;
 
   return (
     <div className="space-y-8">
@@ -102,18 +103,18 @@ export default function LinkBankPage() {
           <div className="grid gap-4 sm:grid-cols-2">
             <SetupCard
               icon={
-                user?.zynkExternalAccountId ? (
+                hasBankAccount ? (
                   <CheckCircle2 className="size-5" />
                 ) : (
                   <Building2 className="size-5" />
                 )
               }
-              done={!!user?.zynkExternalAccountId}
+              done={hasBankAccount}
               title="Send account"
               description="Link your US bank via Plaid to fund transfers."
               step="01"
             >
-              {user?.achPushEnabled && !user?.zynkExternalAccountId && (
+              {user?.achPushEnabled && !hasBankAccount && (
                 <div className="flex w-full items-center justify-between rounded-xl border border-border bg-muted/40 p-3">
                   <div className="flex items-center gap-2.5">
                     <Zap className="size-4 text-brand" />
@@ -147,7 +148,7 @@ export default function LinkBankPage() {
                 <PlaidLinkButton
                   onSuccess={handlePlaidSuccess}
                   label={
-                    user?.zynkExternalAccountId
+                    hasBankAccount
                       ? "Connect Different Bank Account"
                       : "Connect Bank Account"
                   }
@@ -165,18 +166,18 @@ export default function LinkBankPage() {
 
             <SetupCard
               icon={
-                user?.zynkDepositAccountId ? (
+                hasDepositAccount ? (
                   <CheckCircle2 className="size-5" />
                 ) : (
                   <Landmark className="size-5" />
                 )
               }
-              done={!!user?.zynkDepositAccountId}
+              done={hasDepositAccount}
               title="Your Indian bank"
               description="Add your own Indian bank account so you can send money to yourself."
               step="02"
             >
-              {user?.zynkDepositAccountId ? (
+              {hasDepositAccount ? (
                 <p className="text-sm font-medium text-success">
                   Account linked
                 </p>

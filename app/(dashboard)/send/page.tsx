@@ -103,7 +103,7 @@ export default function SendPage() {
     );
   }
 
-  if (account && !account.user?.zynkExternalAccountId) {
+  if (account && !account.hasBankAccount) {
     return (
       <div className="mx-auto w-full max-w-lg">
         <Card variant="elevated" className="p-8 text-center">
@@ -209,7 +209,7 @@ export default function SendPage() {
             <div className="space-y-3">
               <SelfTransferCard
                 indianKycStatus={account?.indianKycStatus ?? "NONE"}
-                hasDepositAccount={!!account?.user?.zynkDepositAccountId}
+                hasDepositAccount={!!account?.hasDepositAccount}
               />
               <Button
                 variant="outline"

@@ -48,7 +48,7 @@ export default function SendToSelfPage() {
     defaultValues: { amount: "", note: "" },
   });
 
-  const hasDepositAccount = !!account?.user?.zynkDepositAccountId;
+  const hasDepositAccount = !!account?.hasDepositAccount;
 
   if (!hasDepositAccount) {
     return (

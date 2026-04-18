@@ -41,8 +41,8 @@ export default function HomePage() {
         : "Failed to load data"
       : null;
 
-  const hasSendAccount = !!user?.zynkExternalAccountId;
-  const hasReceiveAccount = !!user?.zynkDepositAccountId;
+  const hasSendAccount = !!account?.hasBankAccount;
+  const hasReceiveAccount = !!account?.hasDepositAccount;
   const bothLinked = hasSendAccount && hasReceiveAccount;
 
   if (isLoading || needsProfile) {
