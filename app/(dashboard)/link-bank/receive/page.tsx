@@ -51,9 +51,7 @@ export default function ReceiveBankPage() {
       ifsc: "",
       accountName: "",
       bankName: "",
-      branchName: "",
       bankAccountType: undefined,
-      phoneNumber: "",
     },
   });
 
@@ -64,9 +62,7 @@ export default function ReceiveBankPage() {
         ifsc: data.ifsc,
         accountName: data.accountName,
         bankName: data.bankName,
-        branchName: data.branchName,
         bankAccountType: data.bankAccountType,
-        phoneNumber: `+91${data.phoneNumber}`,
       });
       await queryClient.invalidateQueries({ queryKey: queryKeys.account });
       toast.success("Indian bank added successfully!");
@@ -146,20 +142,12 @@ export default function ReceiveBankPage() {
               placeholder="e.g. SBIN0001234"
               transform={(v) => v.toUpperCase()}
             />
-            <div className="grid grid-cols-2 gap-3">
-              <TextField
-                control={form.control}
-                name="bankName"
-                label="Bank name"
-                placeholder="e.g. State Bank of India"
-              />
-              <TextField
-                control={form.control}
-                name="branchName"
-                label="Branch"
-                placeholder="e.g. Main Branch"
-              />
-            </div>
+            <TextField
+              control={form.control}
+              name="bankName"
+              label="Bank name"
+              placeholder="e.g. State Bank of India"
+            />
 
             <FormField
               control={form.control}
@@ -181,16 +169,6 @@ export default function ReceiveBankPage() {
                   <FormMessage />
                 </FormItem>
               )}
-            />
-
-            <TextField
-              control={form.control}
-              name="phoneNumber"
-              label="Phone number"
-              placeholder="10-digit phone number"
-              leading={
-                <span className="font-medium text-foreground/80">+91</span>
-              }
             />
 
             <Button

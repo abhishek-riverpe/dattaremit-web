@@ -144,9 +144,7 @@ export interface AddDepositAccountPayload {
   ifsc: string;
   accountName: string;
   bankName: string;
-  branchName: string;
   bankAccountType: string;
-  phoneNumber: string;
 }
 
 // ── Activity ──

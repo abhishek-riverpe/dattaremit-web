@@ -12,16 +12,10 @@ export const depositAccountSchema = yup.object({
     .trim()
     .required("Account holder name is required"),
   bankName: yup.string().trim().required("Bank name is required"),
-  branchName: yup.string().trim().required("Branch name is required"),
   bankAccountType: yup
     .string()
     .oneOf(["SAVINGS", "CURRENT"], "Account type must be Savings or Current")
     .required("Account type is required"),
-  phoneNumber: yup
-    .string()
-    .trim()
-    .required("Phone number is required")
-    .matches(/^\d{10}$/, "Phone number must be exactly 10 digits"),
 });
 
 export type DepositAccountFormData = yup.InferType<typeof depositAccountSchema>;
