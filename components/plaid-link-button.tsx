@@ -1,12 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useRef } from "react";
+import { useUser } from "@clerk/nextjs";
 import { usePlaidLink } from "react-plaid-link";
 import { Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePlaidLinkToken } from "@/hooks/api";
-
-const PLAID_TOKEN_TTL_MS = 4 * 60 * 60 * 1000;
 
 interface PlaidLinkButtonProps {
   onSuccess: (publicToken: string, metadata: unknown) => void;
@@ -19,23 +18,25 @@ export function PlaidLinkButton({
   onExit,
   label = "Link bank account",
 }: PlaidLinkButtonProps) {
-  const { mutate: generateToken, data, isPending } = usePlaidLinkToken();
-  const tokenCreatedAt = useRef<number | null>(null);
+  const { user: clerkUser } = useUser();
+  const { mutate: generateToken, data, isPending, reset } = usePlaidLinkToken();
   const hasOpened = useRef(false);
 
-  const isTokenExpired = () => {
-    if (!tokenCreatedAt.current) return true;
-    return Date.now() - tokenCreatedAt.current > PLAID_TOKEN_TTL_MS;
-  };
+  useEffect(() => {
+    reset();
+    hasOpened.current = false;
+  }, [clerkUser?.id, reset]);
 
   const { open, ready } = usePlaidLink({
     token: data?.plaid_token ?? null,
     onSuccess: (publicToken, metadata) => {
       hasOpened.current = false;
+      reset();
       onSuccess(publicToken, metadata);
     },
     onExit: () => {
       hasOpened.current = false;
+      reset();
       onExit?.();
     },
     onEvent: (eventName, metadata) => {
@@ -44,19 +45,9 @@ export function PlaidLinkButton({
   });
 
   const handleClick = useCallback(() => {
-    if (data?.plaid_token && ready && !isTokenExpired()) {
-      if (!hasOpened.current) {
-        hasOpened.current = true;
-        open();
-      }
-    } else {
-      generateToken(undefined, {
-        onSuccess: () => {
-          tokenCreatedAt.current = Date.now();
-        },
-      });
-    }
-  }, [data?.plaid_token, ready, open, generateToken]);
+    hasOpened.current = false;
+    generateToken();
+  }, [generateToken]);
 
   useEffect(() => {
     if (data?.plaid_token && ready && !hasOpened.current) {
