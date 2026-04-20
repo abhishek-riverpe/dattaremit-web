@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   CheckCircle2,
@@ -9,7 +8,7 @@ import {
   Sparkles,
   Landmark,
 } from "lucide-react";
-import { useAccount } from "@/hooks/api";
+import { useAccount, useExchangeRate } from "@/hooks/api";
 import { ApiError } from "@/services/api";
 import { ROUTES } from "@/constants/routes";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -20,19 +19,9 @@ import { Reveal, Stagger, StaggerItem } from "@/components/motion/reveal";
 
 export default function HomePage() {
   const { data: account, isLoading, error, refetch } = useAccount();
+  const { data: rateData } = useExchangeRate();
+  const rate = rateData?.rate ?? null;
   const user = account?.user;
-  const [rate, setRate] = useState<number | null>(null);
-
-  useEffect(() => {
-    fetch("/api/exchange-rate")
-      .then((res) => res.json())
-      .then((json) => {
-        if (json?.success && typeof json.data?.rate === "number") {
-          setRate(json.data.rate);
-        }
-      })
-      .catch(() => {});
-  }, []);
 
   const needsProfile = error instanceof ApiError && error.status === 404;
   const realError =

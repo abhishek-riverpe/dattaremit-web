@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { sendToSelf } from "@/services/api";
-import { queryKeys } from "@/constants/query-keys";
+import { invalidateTransferCaches } from "@/hooks/api/invalidate-transfer-caches";
 import type { SendToSelfPayload } from "@/types/transfer";
 
 export function useSendToSelf() {
@@ -13,9 +13,6 @@ export function useSendToSelf() {
       payload: SendToSelfPayload;
       idempotencyKey?: string;
     }) => sendToSelf(payload, idempotencyKey),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: queryKeys.activities.all });
-      qc.invalidateQueries({ queryKey: queryKeys.account });
-    },
+    onSuccess: () => invalidateTransferCaches(qc),
   });
 }

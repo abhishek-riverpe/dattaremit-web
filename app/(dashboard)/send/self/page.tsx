@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { useForm, type Resolver } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -12,7 +11,7 @@ import {
   type TransferAmountFormData,
 } from "@/schemas/transfer.schema";
 import { useAccount, useSendToSelf } from "@/hooks/api";
-import { generateIdempotencyKey } from "@/lib/idempotency";
+import { useSendMoneyState } from "@/hooks/use-send-money-state";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
@@ -34,14 +33,20 @@ export default function SendToSelfPage() {
     description: "We emailed you a 6-digit code. Enter it to authorize moving funds.",
   });
 
-  const [step, setStep] = useState<Step>("amount");
-  const [amount, setAmount] = useState("");
-  const [note, setNote] = useState("");
-  const [transactionId, setTransactionId] = useState<string>();
-  const [sendError, setSendError] = useState<string | null>(null);
-  const [idempotencyKey, setIdempotencyKey] = useState<string>(() =>
-    generateIdempotencyKey(),
-  );
+  const {
+    step,
+    setStep,
+    amount,
+    setAmount,
+    note,
+    setNote,
+    transactionId,
+    setTransactionId,
+    sendError,
+    setSendError,
+    idempotencyKey,
+    resetIdempotencyKey,
+  } = useSendMoneyState<Step>("amount");
 
   const form = useForm<TransferAmountFormData>({
     resolver: yupResolver(
@@ -85,7 +90,7 @@ export default function SendToSelfPage() {
           transactionId={transactionId}
           onRetry={() => {
             setSendError(null);
-            setIdempotencyKey(generateIdempotencyKey());
+            resetIdempotencyKey();
             setStep("review");
           }}
         />

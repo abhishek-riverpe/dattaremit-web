@@ -13,7 +13,7 @@ import {
   type TransferAmountFormData,
 } from "@/schemas/transfer.schema";
 import { useAccount, useRecipients, useSendMoney } from "@/hooks/api";
-import { generateIdempotencyKey } from "@/lib/idempotency";
+import { useSendMoneyState } from "@/hooks/use-send-money-state";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
@@ -47,16 +47,22 @@ export default function SendPage() {
     description: "We emailed you a 6-digit code. Enter it to authorize this send.",
   });
 
-  const [step, setStep] = useState<Step>(preselectedId ? "amount" : "select");
+  const {
+    step,
+    setStep,
+    amount,
+    setAmount,
+    note,
+    setNote,
+    transactionId,
+    setTransactionId,
+    sendError,
+    setSendError,
+    idempotencyKey,
+    resetIdempotencyKey,
+  } = useSendMoneyState<Step>(preselectedId ? "amount" : "select");
   const [selectedId, setSelectedId] = useState<string | null>(preselectedId);
-  const [amount, setAmount] = useState("");
-  const [note, setNote] = useState("");
-  const [transactionId, setTransactionId] = useState<string>();
-  const [sendError, setSendError] = useState<string | null>(null);
   const [warningOpen, setWarningOpen] = useState(false);
-  const [idempotencyKey, setIdempotencyKey] = useState<string>(() =>
-    generateIdempotencyKey(),
-  );
 
   const selected = useMemo<Recipient | undefined>(
     () => recipients?.find((r) => r.id === selectedId),
@@ -89,7 +95,7 @@ export default function SendPage() {
           transactionId={transactionId}
           onRetry={() => {
             setSendError(null);
-            setIdempotencyKey(generateIdempotencyKey());
+            resetIdempotencyKey();
             setStep("review");
           }}
         />

@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, Check, Minus, Sparkles } from "lucide-react";
 import { motion } from "motion/react";
@@ -9,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Reveal, Stagger, StaggerItem } from "@/components/motion/reveal";
+import { useExchangeRate } from "@/hooks/api";
 import {
   SEND_AMOUNT,
   COMPETITOR_SPREADS,
@@ -17,28 +17,8 @@ import {
 import { ROUTES } from "@/constants/routes";
 import { cn } from "@/lib/utils";
 
-interface ExchangeRateData {
-  rate: number;
-  updatedAt: string;
-  stale: boolean;
-}
-
 export function WelcomeContent() {
-  const [rateData, setRateData] = useState<ExchangeRateData | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetch("/api/exchange-rate")
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.success && json.data) {
-          setRateData(json.data);
-        }
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
-
+  const { data: rateData, isLoading: loading } = useExchangeRate();
   const midMarketRate = rateData?.rate ?? 83.42;
 
   const dattaremit = COMPETITOR_SPREADS.find((p) => p.highlight);

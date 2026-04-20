@@ -22,4 +22,5 @@ export const queryKeys = {
       ["notifications", "list", params] as const,
     unreadCount: ["notifications", "unread-count"] as const,
   },
+  exchangeRate: ["exchange-rate"] as const,
 } as const;

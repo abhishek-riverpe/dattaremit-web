@@ -9,6 +9,7 @@ export { usePlaidLinkToken } from "./use-plaid-link-token";
 export { useAddExternalAccount } from "./use-external-account";
 export { useAddDepositAccount } from "./use-deposit-account";
 export { useActivities } from "./use-activities";
+export { useExchangeRate } from "./use-exchange-rate";
 
 // Transfers
 export { useSendMoney } from "./use-send-money";
