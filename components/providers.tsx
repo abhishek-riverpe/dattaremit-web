@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ClerkProvider, useAuth } from "@clerk/nextjs";
 import { ThemeProvider } from "next-themes";
 import {
@@ -9,22 +9,28 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { setTokenGetter } from "@/services/api";
+import { clearClientData } from "@/lib/clear-client-data";
 import { Toaster } from "@/components/ui/sonner";
 import { InAppBanner } from "@/components/notifications/in-app-banner";
 import { PushListener } from "@/components/notifications/push-listener";
 
 function AuthTokenBridge({ children }: { children: React.ReactNode }) {
-  const { getToken, isSignedIn } = useAuth();
+  const { getToken, isLoaded, isSignedIn } = useAuth();
   const queryClient = useQueryClient();
+  const wasSignedInRef = useRef(false);
 
   // Set synchronously so token is available before any queries fire
   setTokenGetter(() => getToken());
 
   useEffect(() => {
-    if (!isSignedIn) {
-      queryClient.clear();
+    if (!isLoaded) return;
+    // Clear all client-side caches on signed-in → signed-out transitions.
+    // Runs for manual sign-out, idle logout, and externally expired sessions.
+    if (wasSignedInRef.current && !isSignedIn) {
+      clearClientData(queryClient);
     }
-  }, [isSignedIn, queryClient]);
+    wasSignedInRef.current = !!isSignedIn;
+  }, [isLoaded, isSignedIn, queryClient]);
 
   return <>{children}</>;
 }

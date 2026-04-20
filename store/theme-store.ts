@@ -187,6 +187,10 @@ export function useThemeStore() {
   return { preset, colors, isLoaded, setPreset: set };
 }
 
+export function clearThemeStore() {
+  themeStore.clear();
+}
+
 export function buildThemeCssVars(colors: ThemeColors): Record<string, string> {
   return {
     "--color-primary": colors.primary,

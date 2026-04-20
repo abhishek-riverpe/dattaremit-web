@@ -86,6 +86,17 @@ function resetOnboarding() {
   setStep("welcome");
 }
 
+export function clearOnboardingStore() {
+  currentStep = "welcome";
+  isLoaded = false;
+  try {
+    window.localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // localStorage unavailable — in-memory state still reset
+  }
+  emitChange();
+}
+
 export function useOnboardingStore() {
   const step = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   const [loaded, setLoaded] = useState(isLoaded);

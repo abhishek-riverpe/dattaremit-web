@@ -60,6 +60,17 @@ export function createPersistedStore<T extends string>(
     }
   }
 
+  function clear() {
+    current = defaultValue;
+    loaded = false;
+    try {
+      window.localStorage.removeItem(storageKey);
+    } catch {
+      // storage unavailable — in-memory state still reset
+    }
+    emit();
+  }
+
   function useStore() {
     const value = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
     const [isLoaded, setIsLoaded] = useState(loaded);
@@ -74,5 +85,5 @@ export function createPersistedStore<T extends string>(
     return { current: value, isLoaded, set };
   }
 
-  return { useStore, set, load };
+  return { useStore, set, load, clear };
 }
