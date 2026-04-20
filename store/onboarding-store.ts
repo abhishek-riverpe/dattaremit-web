@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useSyncExternalStore } from "react";
 import { STORAGE_KEYS } from "@/constants/storage-keys";
 
 export type OnboardingStep =
@@ -51,6 +51,14 @@ function getServerSnapshot(): OnboardingStep {
   return "welcome";
 }
 
+function getLoadedSnapshot() {
+  return isLoaded;
+}
+
+function getLoadedServerSnapshot() {
+  return false;
+}
+
 function loadStep() {
   if (typeof window === "undefined") return;
   try {
@@ -99,13 +107,14 @@ export function clearOnboardingStore() {
 
 export function useOnboardingStore() {
   const step = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-  const [loaded, setLoaded] = useState(isLoaded);
+  const loaded = useSyncExternalStore(
+    subscribe,
+    getLoadedSnapshot,
+    getLoadedServerSnapshot,
+  );
 
   useEffect(() => {
-    if (!isLoaded) {
-      loadStep();
-      setLoaded(true);
-    }
+    if (!isLoaded) loadStep();
   }, []);
 
   const stepIndex = useMemo(() => STEP_ORDER.indexOf(step), [step]);

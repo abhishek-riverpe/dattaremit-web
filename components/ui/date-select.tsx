@@ -86,7 +86,6 @@ export function DateSelect({
     setDay(p.day);
     setMonth(p.month);
     setYear(p.year);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
 
   const maxDay = React.useMemo(

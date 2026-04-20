@@ -34,11 +34,7 @@ export interface CreateRecipientPayload {
 }
 
 export interface AddRecipientBankPayload {
-  bankName: string;
   accountName: string;
   accountNumber: string;
   ifsc: string;
-  branchName: string;
-  bankAccountType: string;
-  phoneNumber: string;
 }

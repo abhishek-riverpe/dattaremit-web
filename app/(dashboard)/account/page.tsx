@@ -6,7 +6,6 @@ import { useAccount } from "@/hooks/api";
 import { useAppSignOut } from "@/hooks/use-app-sign-out";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import {
