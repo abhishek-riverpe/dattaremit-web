@@ -21,7 +21,6 @@ export type RecipientFormData = yup.InferType<typeof recipientSchema>;
 const IFSC_REGEX = /^[A-Z]{4}0[A-Z0-9]{6}$/;
 
 export const recipientBankSchema = yup.object({
-  bankName: yup.string().trim().required("Bank name is required"),
   accountName: yup.string().trim().required("Account holder name is required"),
   accountNumber: yup
     .string()
@@ -34,12 +33,6 @@ export const recipientBankSchema = yup.object({
     .uppercase()
     .required("IFSC is required")
     .matches(IFSC_REGEX, "IFSC must be like SBIN0001234"),
-  branchName: yup.string().trim().required("Branch name is required"),
-  bankAccountType: yup
-    .string()
-    .oneOf(["SAVINGS", "CURRENT"], "Pick an account type")
-    .required("Account type is required"),
-  phoneNumber: yup.string().trim().required("Phone number is required"),
 });
 
 export type RecipientBankFormData = yup.InferType<typeof recipientBankSchema>;

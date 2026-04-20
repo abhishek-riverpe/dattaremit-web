@@ -140,11 +140,9 @@ export interface AddExternalAccountPayload {
 // ── Deposit Account ──
 
 export interface AddDepositAccountPayload {
+  accountName: string;
   accountNumber: string;
   ifsc: string;
-  accountName: string;
-  bankName: string;
-  bankAccountType: string;
 }
 
 // ── Activity ──

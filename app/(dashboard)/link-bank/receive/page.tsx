@@ -18,21 +18,7 @@ import { ROUTES } from "@/constants/routes";
 import { KycGate } from "@/components/kyc-gate";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Form } from "@/components/ui/form";
 import { TextField } from "@/components/ui/text-field";
 import { PageHeader } from "@/components/ui/page-header";
 import { BackLink } from "@/components/ui/back-link";
@@ -48,22 +34,18 @@ export default function ReceiveBankPage() {
   const form = useForm<DepositAccountFormData>({
     resolver: yupResolver(depositAccountSchema),
     defaultValues: {
+      accountName: "",
       accountNumber: "",
       ifsc: "",
-      accountName: "",
-      bankName: "",
-      bankAccountType: undefined,
     },
   });
 
   const onSubmit = async (data: DepositAccountFormData) => {
     try {
       await addDeposit.mutateAsync({
+        accountName: data.accountName,
         accountNumber: data.accountNumber,
         ifsc: data.ifsc,
-        accountName: data.accountName,
-        bankName: data.bankName,
-        bankAccountType: data.bankAccountType,
       });
       await queryClient.invalidateQueries({ queryKey: queryKeys.account });
       toast.success("Indian bank added successfully!");
@@ -142,34 +124,6 @@ export default function ReceiveBankPage() {
               label="IFSC code"
               placeholder="e.g. SBIN0001234"
               transform={(v) => v.toUpperCase()}
-            />
-            <TextField
-              control={form.control}
-              name="bankName"
-              label="Bank name"
-              placeholder="e.g. State Bank of India"
-            />
-
-            <FormField
-              control={form.control}
-              name="bankAccountType"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Account type</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select account type" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="SAVINGS">Savings</SelectItem>
-                      <SelectItem value="CURRENT">Current</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
             />
 
             <Button

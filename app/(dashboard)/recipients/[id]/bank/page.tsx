@@ -67,11 +67,9 @@ export default function RecipientBankPage({
             submitLabel={existing ? "Update bank" : "Save bank"}
             submitting={addBank.isPending}
             defaultValues={{
-              bankName: recipient.bankName ?? "",
               accountName:
                 `${recipient.firstName} ${recipient.lastName}`.trim(),
               ifsc: recipient.bankIfsc ?? "",
-              phoneNumber: recipient.phoneNumber,
             }}
             onSubmit={async (data) => {
               try {

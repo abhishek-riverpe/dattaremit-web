@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 
 interface PersistedStoreConfig<T extends string> {
   storageKey: string;
@@ -33,6 +33,14 @@ export function createPersistedStore<T extends string>(
 
   function getServerSnapshot() {
     return defaultValue;
+  }
+
+  function getLoadedSnapshot() {
+    return loaded;
+  }
+
+  function getLoadedServerSnapshot() {
+    return false;
   }
 
   function load() {
@@ -73,13 +81,14 @@ export function createPersistedStore<T extends string>(
 
   function useStore() {
     const value = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-    const [isLoaded, setIsLoaded] = useState(loaded);
+    const isLoaded = useSyncExternalStore(
+      subscribe,
+      getLoadedSnapshot,
+      getLoadedServerSnapshot,
+    );
 
     useEffect(() => {
-      if (!loaded) {
-        load();
-        setIsLoaded(true);
-      }
+      if (!loaded) load();
     }, []);
 
     return { current: value, isLoaded, set };

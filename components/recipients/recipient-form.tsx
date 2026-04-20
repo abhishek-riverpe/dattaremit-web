@@ -1,6 +1,6 @@
 "use client";
 
-import { useForm, type Resolver } from "react-hook-form";
+import { useForm, useWatch, type Resolver } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 
 import {
@@ -56,7 +56,7 @@ export function RecipientForm({
     },
   });
 
-  const emailValue = form.watch("email") ?? "";
+  const emailValue = useWatch({ control: form.control, name: "email" }) ?? "";
   const isUnchanged =
     !!originalEmail &&
     emailValue.trim().toLowerCase() === originalEmail.trim().toLowerCase();

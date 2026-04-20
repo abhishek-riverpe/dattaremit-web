@@ -1,4 +1,4 @@
-/* global self, clients */
+/* global self */
 
 /**
  * Dattaremit web push service worker.
