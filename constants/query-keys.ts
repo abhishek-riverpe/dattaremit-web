@@ -23,4 +23,6 @@ export const queryKeys = {
     unreadCount: ["notifications", "unread-count"] as const,
   },
   exchangeRate: ["exchange-rate"] as const,
+  emailCheck: (scope: "user" | "recipient", email: string) =>
+    ["check-email", scope, email] as const,
 } as const;

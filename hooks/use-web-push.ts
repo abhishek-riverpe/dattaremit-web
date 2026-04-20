@@ -23,10 +23,7 @@ function subscriptionToPayload(sub: PushSubscription) {
   const json = sub.toJSON();
   return {
     platform: "WEB" as const,
-    deviceName:
-      typeof navigator !== "undefined"
-        ? navigator.userAgent.slice(0, 120)
-        : undefined,
+    deviceName: "Web Browser",
     subscription: {
       endpoint: json.endpoint!,
       keys: {

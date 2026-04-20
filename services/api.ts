@@ -1,4 +1,5 @@
 import axios from "axios";
+import { generateIdempotencyKey } from "@/lib/idempotency";
 import type {
   ApiResponse,
   User,
@@ -33,7 +34,6 @@ import type {
   PaginatedNotifications,
 } from "@/types/notification";
 import type {
-  IndianKycPayload,
   IndianKycEncryptedPayload,
   IndianKycResponse,
   PublicKeyResponse,
@@ -67,25 +67,33 @@ const api = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
-// Server endpoints wrapped with `withIdempotency` require a 16-255 char
-// `idempotency-key` header matching /^[a-zA-Z0-9\-_]+$/. Generate a UUID
-// (36 chars, hyphens only) when callers don't supply one.
-function genIdempotencyKey(): string {
-  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
-    return crypto.randomUUID();
-  }
-  // Fallback for older runtimes.
-  return `${Date.now()}-${Math.random().toString(36).slice(2)}-${Math.random()
-    .toString(36)
-    .slice(2)}`;
-}
-
 function idempotencyHeaders(key?: string): { "idempotency-key": string } {
-  return { "idempotency-key": key ?? genIdempotencyKey() };
+  return { "idempotency-key": key ?? generateIdempotencyKey() };
 }
 
-// Request interceptor: attach auth token
+const SAFE_ERROR_MESSAGES: Record<number, string> = {
+  400: "Invalid request. Please check your details and try again.",
+  401: "Your session has expired. Please sign in again.",
+  403: "You don't have permission to do that.",
+  404: "We couldn't find what you were looking for.",
+  409: "This request conflicts with an existing record.",
+  422: "Some of the information you entered isn't valid.",
+  429: "Too many requests. Please wait a moment and try again.",
+  500: "Something went wrong on our end. Please try again shortly.",
+  502: "Service temporarily unavailable. Please try again shortly.",
+  503: "Service temporarily unavailable. Please try again shortly.",
+};
+
+function safeErrorMessage(status: number): string {
+  if (SAFE_ERROR_MESSAGES[status]) return SAFE_ERROR_MESSAGES[status];
+  if (status >= 500) return SAFE_ERROR_MESSAGES[500];
+  if (status >= 400) return SAFE_ERROR_MESSAGES[400];
+  return "An unexpected error occurred. Please try again.";
+}
+
+// Request interceptor: attach auth token + correlation id
 api.interceptors.request.use(async (config) => {
+  config.headers["x-request-id"] = generateIdempotencyKey();
   if (tokenGetter) {
     const token = await tokenGetter();
     if (token) {
@@ -103,17 +111,16 @@ api.interceptors.response.use(
   (response) => {
     const body: ApiResponse<unknown> = response.data;
     if (!body.success) {
-      throw new ApiError(response.status, body.message || "Request failed");
+      throw new ApiError(response.status, safeErrorMessage(response.status));
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return body.data as any;
   },
   (error) => {
     if (axios.isAxiosError(error) && error.response) {
-      const body = error.response.data as ApiResponse<unknown> | undefined;
       throw new ApiError(
         error.response.status,
-        body?.message || error.message || "Request failed"
+        safeErrorMessage(error.response.status)
       );
     }
     throw error;
@@ -284,12 +291,6 @@ export const checkRecipientEmailAvailable = (
   api.get("/recipients/check-email", { params: { email } });
 
 // ── Zynk (Indian KYC) ──
-// Plaintext variant — kept for dev/testing against plaintext endpoint. Prefer
-// submitIndianKycEncrypted in production. Server accepts either shape.
-export const submitIndianKyc = (
-  data: IndianKycPayload
-): Promise<IndianKycResponse> => api.post("/zynk/indian-kyc", data);
-
 export const submitIndianKycEncrypted = (
   data: IndianKycEncryptedPayload
 ): Promise<IndianKycResponse> => api.post("/zynk/indian-kyc", data);

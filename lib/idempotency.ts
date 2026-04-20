@@ -1,12 +1,15 @@
 /**
  * Generate an RFC 4122 v4 UUID for use as an Idempotency-Key on write requests.
- * Falls back to a time + random pseudo-UUID when crypto.randomUUID is missing
- * (older browsers, insecure contexts) so we never block a transfer.
+ * Requires a secure context (HTTPS or localhost) so the Web Crypto API is
+ * available. We deliberately fail loudly rather than fall back to Math.random
+ * — predictable keys on a financial endpoint could collide and silently
+ * deduplicate distinct transfers.
  */
 export function generateIdempotencyKey(): string {
-  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
-    return crypto.randomUUID();
+  if (typeof crypto === "undefined" || typeof crypto.randomUUID !== "function") {
+    throw new Error(
+      "crypto.randomUUID is unavailable. A secure context (HTTPS) is required.",
+    );
   }
-  const rand = Math.random().toString(16).slice(2, 10);
-  return `${Date.now().toString(16)}-${rand}`;
+  return crypto.randomUUID();
 }

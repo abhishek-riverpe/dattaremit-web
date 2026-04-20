@@ -77,6 +77,9 @@ export default function IndianKycPage() {
               inputMode="numeric"
               maxLength={12}
               placeholder="12-digit Aadhar number"
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck={false}
               leading={<CreditCard className="size-4" />}
               transform={(v) => v.replace(/\D/g, "")}
             />
@@ -86,6 +89,9 @@ export default function IndianKycPage() {
               label="PAN number"
               maxLength={10}
               placeholder="ABCDE1234F"
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck={false}
               leading={<Hash className="size-4" />}
               transform={(v) => v.toUpperCase()}
             />

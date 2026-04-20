@@ -10,6 +10,7 @@ import { useAccount, useRecipients, useSendMoney } from "@/hooks/api";
 import { useSendMoneyState } from "@/hooks/use-send-money-state";
 import { useStepUp } from "@/hooks/use-step-up";
 import { ROUTES } from "@/constants/routes";
+import { dollarsToCents } from "@/lib/money";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { StepTransition } from "@/components/motion/step-transition";
@@ -62,7 +63,13 @@ export default function SendPage() {
     if (!selected) return;
     setSendError(null);
     const res = await gate(async () => {
-      const amountCents = Math.round(parseFloat(amount) * 100);
+      let amountCents: number;
+      try {
+        amountCents = dollarsToCents(amount);
+      } catch (err) {
+        setSendError(err instanceof Error ? err.message : "Invalid amount");
+        return undefined;
+      }
       try {
         return await sendMoney.mutateAsync({
           payload: {

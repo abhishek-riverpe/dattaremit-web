@@ -39,9 +39,6 @@ export function PlaidLinkButton({
       reset();
       onExit?.();
     },
-    onEvent: (eventName, metadata) => {
-      console.log("[Plaid Link Event]", eventName, metadata);
-    },
   });
 
   const handleClick = useCallback(() => {

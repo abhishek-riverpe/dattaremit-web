@@ -10,8 +10,12 @@ export function useAccount() {
     queryKey: queryKeys.account,
     queryFn: getAccount,
     enabled: !!isSignedIn,
+    staleTime: 0,
+    gcTime: 30_000,
     retry: (failureCount, error) => {
-      if (error instanceof ApiError && error.status === 404) return false;
+      if (error instanceof ApiError && error.status >= 400 && error.status < 500) {
+        return false;
+      }
       return failureCount < 2;
     },
   });

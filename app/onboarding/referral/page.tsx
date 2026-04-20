@@ -9,6 +9,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { validateReferralCode, ApiError } from "@/services/api";
 import { STORAGE_KEYS } from "@/constants/storage-keys";
 import { ROUTES } from "@/constants/routes";
+import { isValidReferralCode } from "@/schemas/referral.schema";
 
 const STORAGE_KEY = STORAGE_KEYS.REFERRAL_CODE;
 
@@ -24,6 +25,10 @@ export default function OnboardingReferralPage() {
     const trimmed = code.trim().toUpperCase();
     if (!trimmed) {
       setError("Please enter a referral code");
+      return;
+    }
+    if (!isValidReferralCode(trimmed)) {
+      setError("Referral codes are 4–20 letters and numbers");
       return;
     }
 

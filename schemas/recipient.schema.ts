@@ -1,19 +1,53 @@
 import * as yup from "yup";
 
 export const recipientSchema = yup.object({
-  firstName: yup.string().trim().required("First name is required"),
-  lastName: yup.string().trim().required("Last name is required"),
-  email: yup.string().trim().email("Enter a valid email").required("Email is required"),
-  phoneNumberPrefix: yup.string().trim().required("Country code is required"),
+  firstName: yup
+    .string()
+    .trim()
+    .required("First name is required")
+    .max(50, "First name is too long"),
+  lastName: yup
+    .string()
+    .trim()
+    .required("Last name is required")
+    .max(50, "Last name is too long"),
+  email: yup
+    .string()
+    .trim()
+    .email("Enter a valid email")
+    .required("Email is required")
+    .max(254, "Email is too long"),
+  phoneNumberPrefix: yup
+    .string()
+    .trim()
+    .required("Country code is required")
+    .max(6, "Country code is too long"),
   phoneNumber: yup
     .string()
     .trim()
     .required("Phone number is required")
+    .max(15, "Phone number is too long")
     .matches(/^\d+$/, "Phone number must contain only digits"),
-  addressLine1: yup.string().trim().required("Address line 1 is required"),
-  city: yup.string().trim().required("City is required"),
-  state: yup.string().trim().required("State is required"),
-  postalCode: yup.string().trim().required("Postal code is required"),
+  addressLine1: yup
+    .string()
+    .trim()
+    .required("Address line 1 is required")
+    .max(100, "Address is too long"),
+  city: yup
+    .string()
+    .trim()
+    .required("City is required")
+    .max(60, "City is too long"),
+  state: yup
+    .string()
+    .trim()
+    .required("State is required")
+    .max(60, "State is too long"),
+  postalCode: yup
+    .string()
+    .trim()
+    .required("Postal code is required")
+    .max(12, "Postal code is too long"),
 });
 
 export type RecipientFormData = yup.InferType<typeof recipientSchema>;
@@ -21,7 +55,11 @@ export type RecipientFormData = yup.InferType<typeof recipientSchema>;
 const IFSC_REGEX = /^[A-Z]{4}0[A-Z0-9]{6}$/;
 
 export const recipientBankSchema = yup.object({
-  accountName: yup.string().trim().required("Account holder name is required"),
+  accountName: yup
+    .string()
+    .trim()
+    .required("Account holder name is required")
+    .max(100, "Account holder name is too long"),
   accountNumber: yup
     .string()
     .trim()

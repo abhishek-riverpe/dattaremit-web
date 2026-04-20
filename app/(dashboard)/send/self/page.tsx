@@ -12,6 +12,7 @@ import {
 } from "@/schemas/transfer.schema";
 import { useAccount, useSendToSelf } from "@/hooks/api";
 import { useSendMoneyState } from "@/hooks/use-send-money-state";
+import { dollarsToCents } from "@/lib/money";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
@@ -224,7 +225,17 @@ export default function SendToSelfPage() {
                   onClick={async () => {
                     setSendError(null);
                     const res = await gate(async () => {
-                      const amountCents = Math.round(parseFloat(amount) * 100);
+                      let amountCents: number;
+                      try {
+                        amountCents = dollarsToCents(amount);
+                      } catch (err) {
+                        setSendError(
+                          err instanceof Error
+                            ? err.message
+                            : "Invalid amount",
+                        );
+                        return undefined;
+                      }
                       try {
                         return await sendToSelf.mutateAsync({
                           payload: { amountCents, note: note || undefined },

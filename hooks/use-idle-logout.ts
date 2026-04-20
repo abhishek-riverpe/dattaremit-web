@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { useAppSignOut } from "@/hooks/use-app-sign-out";
 
-const DEFAULT_IDLE_MS = 15 * 60 * 1000;
+const DEFAULT_IDLE_MS = 10 * 60 * 1000;
 const ACTIVITY_EVENTS = ["mousemove", "keydown", "pointerdown", "touchstart", "scroll"] as const;
 
 /**

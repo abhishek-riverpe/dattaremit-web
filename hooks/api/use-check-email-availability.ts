@@ -5,6 +5,7 @@ import {
   checkRecipientEmailAvailable,
   ApiError,
 } from "@/services/api";
+import { queryKeys } from "@/constants/query-keys";
 
 type Scope = "user" | "recipient";
 
@@ -32,7 +33,7 @@ export function useCheckEmailAvailability(email: string, scope: Scope) {
   const looksValid = EMAIL_SHAPE.test(debounced);
 
   const query = useQuery({
-    queryKey: ["check-email", scope, debounced.toLowerCase()],
+    queryKey: queryKeys.emailCheck(scope, debounced.toLowerCase()),
     queryFn: () =>
       scope === "user"
         ? checkUserEmailAvailable(debounced)

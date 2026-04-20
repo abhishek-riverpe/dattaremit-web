@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { useValidateReferral } from "@/hooks/api";
 import { STORAGE_KEYS } from "@/constants/storage-keys";
 import { ROUTES } from "@/constants/routes";
+import { isValidReferralCode } from "@/schemas/referral.schema";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,10 @@ export default function ReferralPage() {
     const trimmed = code.trim().toUpperCase();
     if (!trimmed) {
       toast.error("Please enter a referral code");
+      return;
+    }
+    if (!isValidReferralCode(trimmed)) {
+      toast.error("Referral codes are 4–20 letters and numbers");
       return;
     }
 

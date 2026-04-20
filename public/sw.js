@@ -49,9 +49,22 @@ self.addEventListener("push", (event) => {
   );
 });
 
+function resolveSafeUrl(candidate) {
+  if (!candidate) return "/notifications";
+  try {
+    const parsed = new URL(candidate, self.location.origin);
+    if (parsed.origin !== self.location.origin) return "/notifications";
+    return parsed.pathname + parsed.search + parsed.hash;
+  } catch {
+    return "/notifications";
+  }
+}
+
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const url = (event.notification.data && event.notification.data.url) || "/notifications";
+  const url = resolveSafeUrl(
+    event.notification.data && event.notification.data.url,
+  );
   event.waitUntil(
     self.clients
       .matchAll({ type: "window", includeUncontrolled: true })
