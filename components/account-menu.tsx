@@ -1,9 +1,10 @@
 "use client";
 
-import { useClerk, useUser } from "@clerk/nextjs";
+import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
+import { useAppSignOut } from "@/hooks/use-app-sign-out";
 import {
   LogOut,
   Moon,
@@ -52,7 +53,7 @@ export function AccountMenuItems({
 }) {
   const router = useRouter();
   const { setTheme } = useTheme();
-  const { signOut } = useClerk();
+  const signOut = useAppSignOut();
   const { displayName, email, user, initials } = useAccountIdentity();
   const { data: account } = useAccount();
 

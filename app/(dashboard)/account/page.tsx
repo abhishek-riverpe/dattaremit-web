@@ -1,8 +1,9 @@
 "use client";
 
-import { useClerk, useUser } from "@clerk/nextjs";
+import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useAccount } from "@/hooks/api";
+import { useAppSignOut } from "@/hooks/use-app-sign-out";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,7 +25,7 @@ import { ROUTES } from "@/constants/routes";
 
 export default function AccountPage() {
   const { user: clerkUser } = useUser();
-  const { signOut } = useClerk();
+  const signOut = useAppSignOut();
   const router = useRouter();
 
   const { data: account, isLoading } = useAccount();

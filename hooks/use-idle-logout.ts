@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { useClerk } from "@clerk/nextjs";
-import { ROUTES } from "@/constants/routes";
+import { useAppSignOut } from "@/hooks/use-app-sign-out";
 
 const DEFAULT_IDLE_MS = 15 * 60 * 1000;
 const ACTIVITY_EVENTS = ["mousemove", "keydown", "pointerdown", "touchstart", "scroll"] as const;
@@ -13,14 +12,14 @@ const ACTIVITY_EVENTS = ["mousemove", "keydown", "pointerdown", "touchstart", "s
  * resets on each event so background tabs lock on schedule.
  */
 export function useIdleLogout(idleMs: number = DEFAULT_IDLE_MS) {
-  const { signOut } = useClerk();
+  const signOut = useAppSignOut();
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const reset = () => {
       if (timerRef.current) clearTimeout(timerRef.current);
       timerRef.current = setTimeout(() => {
-        signOut({ redirectUrl: ROUTES.SIGN_IN });
+        void signOut();
       }, idleMs);
     };
 
