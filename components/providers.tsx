@@ -36,7 +36,13 @@ function AuthTokenBridge({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-export function Providers({ children }: { children: React.ReactNode }) {
+export function Providers({
+  children,
+  nonce,
+}: {
+  children: React.ReactNode;
+  nonce?: string;
+}) {
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -51,6 +57,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <ClerkProvider
+      nonce={nonce}
       signInUrl={ROUTES.SIGN_IN}
       signUpUrl={ROUTES.SIGN_UP}
       afterSignOutUrl={ROUTES.SIGN_IN}
