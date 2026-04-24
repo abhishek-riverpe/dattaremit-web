@@ -1,0 +1,206 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { AnimatePresence } from "motion/react";
+import { toast } from "sonner";
+import { useForm, type Resolver } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+
+import { Card } from "@/components/ui/card";
+import { Form } from "@/components/ui/form";
+import { StepTransition } from "@/components/motion/step-transition";
+import { Stepper, type StepperStep } from "@/components/recipients/wizard/stepper";
+import { ContactStep } from "@/components/recipients/wizard/contact-step";
+import { AddressStep } from "@/components/recipients/wizard/address-step";
+import { ReviewStep } from "@/components/recipients/wizard/review-step";
+import { SuccessScreen } from "@/components/recipients/wizard/success-screen";
+import { SharedRecipientCard } from "@/components/recipients/shared-recipient-card";
+import {
+  useCheckRecipientIdentity,
+  useCreateRecipient,
+} from "@/hooks/api";
+import {
+  recipientSchema,
+  type RecipientFormData,
+} from "@/schemas/recipient.schema";
+import type { CheckIdentityResult, Recipient } from "@/types/recipient";
+
+type WizardStep = "contact" | "address" | "review" | "success";
+
+const STEPS: readonly StepperStep[] = [
+  { id: "contact", label: "Contact" },
+  { id: "address", label: "Address" },
+  { id: "review", label: "Review" },
+];
+
+type Match = Extract<CheckIdentityResult, { exists: true }>;
+
+export function NewRecipientWizard() {
+  const router = useRouter();
+  const checkIdentity = useCheckRecipientIdentity();
+  const createRecipient = useCreateRecipient();
+
+  const [step, setStep] = useState<WizardStep>("contact");
+  const [match, setMatch] = useState<Match | null>(null);
+  const [dismissedMatchId, setDismissedMatchId] = useState<string | null>(null);
+  const [created, setCreated] = useState<{
+    recipient: Recipient;
+    wasShared: boolean;
+  } | null>(null);
+
+  const form = useForm<RecipientFormData>({
+    resolver: yupResolver(
+      recipientSchema,
+    ) as unknown as Resolver<RecipientFormData>,
+    defaultValues: {
+      firstName: "",
+      lastName: "",
+      email: "",
+      phoneNumberPrefix: "+91",
+      phoneNumber: "",
+      addressLine1: "",
+      city: "",
+      state: "",
+      postalCode: "",
+    },
+    mode: "onBlur",
+  });
+
+  const activeIndex =
+    step === "success" ? STEPS.length - 1 : STEPS.findIndex((s) => s.id === step);
+
+  const handleContactContinue = async () => {
+    const ok = await form.trigger([
+      "firstName",
+      "lastName",
+      "email",
+      "phoneNumberPrefix",
+      "phoneNumber",
+    ]);
+    if (!ok) return;
+
+    const { email, phoneNumberPrefix, phoneNumber } = form.getValues();
+    try {
+      const result = await checkIdentity.mutateAsync({
+        email,
+        phoneNumberPrefix,
+        phoneNumber,
+      });
+      if (result.exists) {
+        if (result.recipient.id === dismissedMatchId) {
+          // The user already said "not them" — respect it.
+          setStep("address");
+          return;
+        }
+        setMatch(result);
+        return;
+      }
+      setStep("address");
+    } catch {
+      // Identity check is a best-effort shortcut; server still dedups on create.
+      setStep("address");
+    }
+  };
+
+  const handleAddressContinue = async () => {
+    const ok = await form.trigger([
+      "addressLine1",
+      "city",
+      "state",
+      "postalCode",
+    ]);
+    if (!ok) return;
+    setStep("review");
+  };
+
+  const submitCreate = async (opts?: { shared?: boolean }) => {
+    const data = form.getValues();
+    try {
+      const recipient = await createRecipient.mutateAsync(data);
+      setCreated({
+        recipient,
+        wasShared: Boolean(opts?.shared || recipient.shared),
+      });
+      setStep("success");
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Failed to add recipient",
+      );
+    }
+  };
+
+  const handleMatchConfirm = async () => {
+    if (!match) return;
+    if (match.alreadyLinked) {
+      router.push(`/recipients/${match.recipient.id}`);
+      return;
+    }
+    await submitCreate({ shared: true });
+    setMatch(null);
+  };
+
+  const handleMatchDismiss = () => {
+    if (match) setDismissedMatchId(match.recipient.id);
+    setMatch(null);
+    setStep("address");
+  };
+
+  return (
+    <Form {...form}>
+      {step !== "success" && (
+        <div className="mb-6">
+          <Stepper steps={STEPS} activeIndex={activeIndex} />
+        </div>
+      )}
+
+      <Card variant="elevated" className="p-6 sm:p-8">
+        <AnimatePresence mode="wait" initial={false}>
+          {match ? (
+            <StepTransition key="match">
+              <SharedRecipientCard
+                match={match}
+                onConfirm={handleMatchConfirm}
+                onDismiss={handleMatchDismiss}
+                confirming={createRecipient.isPending}
+              />
+            </StepTransition>
+          ) : step === "contact" ? (
+            <StepTransition key="contact">
+              <ContactStep
+                onContinue={handleContactContinue}
+                checking={checkIdentity.isPending}
+              />
+            </StepTransition>
+          ) : step === "address" ? (
+            <StepTransition key="address">
+              <AddressStep
+                onBack={() => setStep("contact")}
+                onContinue={handleAddressContinue}
+              />
+            </StepTransition>
+          ) : step === "review" ? (
+            <StepTransition key="review">
+              <ReviewStep
+                onBack={() => setStep("address")}
+                onEditContact={() => setStep("contact")}
+                onEditAddress={() => setStep("address")}
+                onSubmit={() => submitCreate()}
+                submitting={createRecipient.isPending}
+              />
+            </StepTransition>
+          ) : (
+            created && (
+              <StepTransition key="success">
+                <SuccessScreen
+                  recipient={created.recipient}
+                  wasShared={created.wasShared}
+                />
+              </StepTransition>
+            )
+          )}
+        </AnimatePresence>
+      </Card>
+    </Form>
+  );
+}
