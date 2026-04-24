@@ -35,11 +35,15 @@ export function SelectRecipientStep({
   const eligible = recipients?.filter(
     (r) => r.kycStatus === "APPROVED" && r.hasBankAccount,
   );
+  const pendingCount =
+    recipients?.filter(
+      (r) => r.kycStatus !== "APPROVED" || !r.hasBankAccount,
+    ).length ?? 0;
 
   return (
     <>
       <PageHeader
-        eyebrow="Step 1"
+        eyebrow="Recipient"
         title={
           <>
             Who&apos;s it{" "}
@@ -76,8 +80,14 @@ export function SelectRecipientStep({
       {!isLoading && (!eligible || eligible.length === 0) && (
         <EmptyState
           icon={<UserPlus className="size-5" />}
-          title="No recipients yet"
-          description="Add one to get started."
+          title={
+            pendingCount > 0 ? "Nobody's ready to send to yet" : "No recipients yet"
+          }
+          description={
+            pendingCount > 0
+              ? `You have ${pendingCount} recipient${pendingCount === 1 ? "" : "s"} waiting on KYC or a bank link. Open one from the Recipients page to continue.`
+              : "Add one to get started."
+          }
         />
       )}
 

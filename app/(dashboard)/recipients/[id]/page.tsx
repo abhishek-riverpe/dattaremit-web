@@ -17,6 +17,7 @@ import {
 import { toast } from "sonner";
 
 import {
+  useAccount,
   useDeleteRecipientBank,
   useRecipient,
   useRecipientBanks,
@@ -57,12 +58,19 @@ export default function RecipientDetailPage({
 }) {
   const { id } = use(params);
   const router = useRouter();
+  const { data: account } = useAccount();
   const { data: recipient, isLoading, error } = useRecipient(id);
   const {
     data: banks = [],
     isLoading: banksLoading,
     error: banksError,
   } = useRecipientBanks(id);
+
+  const currentUserId = account?.user?.id ?? null;
+  const canEditRecipient =
+    !!recipient?.createdByUserId &&
+    !!currentUserId &&
+    recipient.createdByUserId === currentUserId;
   const resendKyc = useResendRecipientKyc();
   const setDefaultBank = useSetDefaultRecipientBank();
   const deleteBank = useDeleteRecipientBank();
@@ -201,12 +209,14 @@ export default function RecipientDetailPage({
         </Detail>
 
         <div className="mt-6 flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" asChild>
-            <a href={`/recipients/${recipient.id}/edit`}>
-              <Pencil />
-              Edit details
-            </a>
-          </Button>
+          {canEditRecipient && (
+            <Button variant="outline" size="sm" asChild>
+              <a href={`/recipients/${recipient.id}/edit`}>
+                <Pencil />
+                Edit details
+              </a>
+            </Button>
+          )}
           {!kycApproved && (
             <Button
               variant="outline"
@@ -227,6 +237,12 @@ export default function RecipientDetailPage({
             Remove from my list
           </Button>
         </div>
+        {!canEditRecipient && (
+          <p className="mt-3 text-xs text-muted-foreground">
+            Shared recipient — only the user who first added {recipient.firstName}{" "}
+            can edit their profile details.
+          </p>
+        )}
       </Card>
 
       <Card variant="elevated" className="overflow-hidden">

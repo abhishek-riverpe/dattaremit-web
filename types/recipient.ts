@@ -31,8 +31,16 @@ export interface Recipient {
   hasBankAccount: boolean;
   banks: BankDetails[];
   defaultBank: BankDetails | null;
+  /**
+   * The user who first added this shared identity. Used to gate edits to the
+   * shared profile — only the originator can edit. Null if the originator
+   * has been deleted (onDelete: SetNull).
+   */
+  createdByUserId: string | null;
   /** True when the create call linked the user to an already-existing recipient. */
   shared?: boolean;
+  /** True if the backend sent the KYC email to the recipient; false if send failed. */
+  kycEmailSent?: boolean;
   created_at: string;
 }
 

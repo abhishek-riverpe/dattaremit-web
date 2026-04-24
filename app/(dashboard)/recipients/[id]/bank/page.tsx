@@ -22,7 +22,7 @@ export default function RecipientBankPage({
   const { data: account } = useAccount();
   const addBank = useAddRecipientBank();
 
-  const existing = recipient?.hasBankAccount;
+  const hasExistingBanks = (recipient?.banks.length ?? 0) > 0;
 
   if (account && account.accountStatus !== "ACTIVE") {
     return (
@@ -44,14 +44,14 @@ export default function RecipientBankPage({
           eyebrow="Bank"
           title={
             <>
-              {existing ? "Update" : "Add a"}{" "}
-              <span className="text-brand">
-                bank account
-              </span>
-              .
+              Add a <span className="text-brand">bank account</span>.
             </>
           }
-          subtitle="This is where the money will be delivered."
+          subtitle={
+            hasExistingBanks
+              ? "This will be added alongside their existing account(s). First bank becomes the default."
+              : "This is where the money will be delivered. You can add more banks later."
+          }
         />
       </div>
 
@@ -64,17 +64,16 @@ export default function RecipientBankPage({
           </div>
         ) : (
           <RecipientBankForm
-            submitLabel={existing ? "Update bank" : "Save bank"}
+            submitLabel="Add bank account"
             submitting={addBank.isPending}
             defaultValues={{
               accountName:
                 `${recipient.firstName} ${recipient.lastName}`.trim(),
-              ifsc: recipient.defaultBank?.bankIfsc ?? "",
             }}
             onSubmit={async (data) => {
               try {
                 await addBank.mutateAsync({ id, data });
-                toast.success(existing ? "Bank updated" : "Bank added");
+                toast.success("Bank account added");
                 router.push(`/recipients/${id}`);
               } catch (err) {
                 toast.error(

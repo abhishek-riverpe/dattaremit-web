@@ -23,6 +23,10 @@ export function SuccessScreen({ recipient, wasShared }: SuccessScreenProps) {
   const hasBank = recipient.banks.length > 0;
   const name = recipient.firstName;
 
+  // Only trust `kycEmailSent === false` as "delivery failed" — older
+  // responses without the field fall back to the optimistic copy.
+  const kycEmailDelivered = recipient.kycEmailSent !== false;
+
   let headline: string;
   let body: string;
   let primaryLabel: string;
@@ -38,10 +42,15 @@ export function SuccessScreen({ recipient, wasShared }: SuccessScreenProps) {
     body = `Identity is already approved. Add their Indian bank account to unlock transfers.`;
     primaryLabel = "Add bank account";
     primaryHref = `/recipients/${recipient.id}/bank`;
-  } else {
+  } else if (kycEmailDelivered) {
     headline = `We emailed ${name} a KYC link`;
     body = `Once ${name} finishes verification you'll be able to add their bank and send money.`;
     primaryLabel = "Open profile";
+    primaryHref = `/recipients/${recipient.id}`;
+  } else {
+    headline = `${name} is added — KYC email didn't send`;
+    body = `Their identity verification hasn't been emailed yet. You can resend the link from their profile.`;
+    primaryLabel = "Resend KYC";
     primaryHref = `/recipients/${recipient.id}`;
   }
 
@@ -91,10 +100,16 @@ export function SuccessScreen({ recipient, wasShared }: SuccessScreenProps) {
           <p className="max-w-md text-sm text-muted-foreground">{body}</p>
         </div>
 
-        {!kycApproved && (
+        {!kycApproved && kycEmailDelivered && (
           <div className="flex items-center gap-2 rounded-full bg-muted/50 px-4 py-2 text-xs text-muted-foreground">
             <Mail className="size-3.5" />
             Sent to {recipient.email}
+          </div>
+        )}
+        {!kycApproved && !kycEmailDelivered && (
+          <div className="flex items-center gap-2 rounded-full bg-destructive/10 px-4 py-2 text-xs text-destructive">
+            <Mail className="size-3.5" />
+            Email to {recipient.email} didn&rsquo;t send
           </div>
         )}
 

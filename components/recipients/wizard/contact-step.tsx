@@ -1,6 +1,6 @@
 "use client";
 
-import { useFormContext, useWatch } from "react-hook-form";
+import { useFormContext } from "react-hook-form";
 import { ArrowRight, Mail, User } from "lucide-react";
 
 import {
@@ -10,7 +10,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { TextField } from "@/components/ui/text-field";
 import { PhoneInput } from "@/components/phone-input";
-import { useCheckEmailAvailability } from "@/hooks/api";
 import { stripPhonePrefix } from "@/lib/phone-utils";
 import type { RecipientFormData } from "@/schemas/recipient.schema";
 
@@ -21,18 +20,15 @@ interface ContactStepProps {
 
 /**
  * Step 1 of the new-recipient wizard — just enough to identify the person
- * so we can run a dedup check before asking for address details.
+ * so we can run an identity check before asking for address details.
+ *
+ * We intentionally DO NOT preflight the email-taken check here. The
+ * identity check on Continue returns a richer result — when the identity
+ * is already linked to the current user, we render a "Already in your
+ * list → Open recipient" card instead of blocking with a passive error.
  */
 export function ContactStep({ onContinue, checking }: ContactStepProps) {
   const form = useFormContext<RecipientFormData>();
-
-  const emailValue =
-    useWatch({ control: form.control, name: "email" }) ?? "";
-  const { available, isChecking } = useCheckEmailAvailability(
-    emailValue,
-    "recipient",
-  );
-  const emailTaken = available === false;
 
   return (
     <div className="space-y-6">
@@ -59,27 +55,18 @@ export function ContactStep({ onContinue, checking }: ContactStepProps) {
           name="lastName"
           label="Last name"
           placeholder="Patel"
+          leading={<User className="size-4" />}
         />
       </div>
 
-      <div className="space-y-1.5">
-        <TextField
-          control={form.control}
-          name="email"
-          label="Email"
-          type="email"
-          placeholder="asha@example.com"
-          leading={<Mail className="size-4" />}
-        />
-        {emailTaken && (
-          <p className="text-sm text-destructive">
-            You already have a recipient with this email.
-          </p>
-        )}
-        {isChecking && !emailTaken && (
-          <p className="text-sm text-muted-foreground">Checking availability…</p>
-        )}
-      </div>
+      <TextField
+        control={form.control}
+        name="email"
+        label="Email"
+        type="email"
+        placeholder="asha@example.com"
+        leading={<Mail className="size-4" />}
+      />
 
       <FormField
         control={form.control}
@@ -114,7 +101,6 @@ export function ContactStep({ onContinue, checking }: ContactStepProps) {
           size="lg"
           onClick={onContinue}
           loading={checking}
-          disabled={emailTaken}
         >
           Continue
           <ArrowRight />

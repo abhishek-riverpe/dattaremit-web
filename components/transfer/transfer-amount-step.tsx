@@ -12,15 +12,21 @@ import { Card } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
 import { PageHeader } from "@/components/ui/page-header";
 import { TextField } from "@/components/ui/text-field";
-import type { Recipient } from "@/types/recipient";
+import type { BankDetails, Recipient } from "@/types/recipient";
 
 interface TransferAmountStepProps {
   recipient: Recipient;
+  /**
+   * The bank the transfer will go to. Null while resolving; we fall back
+   * to copy that says "their linked account" so we never render "Bank: null".
+   */
+  selectedBank?: BankDetails | null;
   onContinue: (data: { amount: string; note: string }) => void;
 }
 
 export function TransferAmountStep({
   recipient,
+  selectedBank,
   onContinue,
 }: TransferAmountStepProps) {
   const form = useForm<TransferAmountFormData>({
@@ -30,17 +36,24 @@ export function TransferAmountStep({
     defaultValues: { amount: "", note: "" },
   });
 
+  const bank = selectedBank ?? recipient.defaultBank;
+  const destinationLabel = bank?.label
+    ? `their ${bank.label} account`
+    : bank?.bankName
+      ? `their ${bank.bankName} account`
+      : "their linked account";
+
   return (
     <>
       <PageHeader
-        eyebrow="Step 2"
+        eyebrow="Amount"
         title={
           <>
             How much for{" "}
             <span className="text-brand">{recipient.firstName}</span>?
           </>
         }
-        subtitle={`Funds will arrive in ${recipient.defaultBank?.bankName ?? "their linked account"}.`}
+        subtitle={`Funds will arrive in ${destinationLabel}.`}
       />
 
       <Card variant="elevated" className="p-6 sm:p-8">

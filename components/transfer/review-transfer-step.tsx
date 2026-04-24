@@ -5,10 +5,11 @@ import { Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
-import type { Recipient } from "@/types/recipient";
+import type { BankDetails, Recipient } from "@/types/recipient";
 
 interface ReviewTransferStepProps {
   recipient: Recipient;
+  selectedBank?: BankDetails | null;
   amount: string;
   note: string;
   isSending: boolean;
@@ -17,15 +18,17 @@ interface ReviewTransferStepProps {
 
 export function ReviewTransferStep({
   recipient,
+  selectedBank,
   amount,
   note,
   isSending,
   onConfirm,
 }: ReviewTransferStepProps) {
+  const bank = selectedBank ?? recipient.defaultBank;
   return (
     <>
       <PageHeader
-        eyebrow="Step 3"
+        eyebrow="Review"
         title={
           <>
             Confirm and <span className="text-brand">send</span>.
@@ -56,8 +59,8 @@ export function ReviewTransferStep({
 
         <div className="space-y-3 p-6 text-sm">
           <Row label="Bank">
-            {recipient.defaultBank
-              ? `${recipient.defaultBank.bankName ?? "Bank"} · ${recipient.defaultBank.bankAccountNumberMasked}`
+            {bank
+              ? `${bank.label ?? bank.bankName ?? "Bank"} · ${bank.bankAccountNumberMasked}`
               : "—"}
           </Row>
           <Row label="Recipient">{recipient.email}</Row>

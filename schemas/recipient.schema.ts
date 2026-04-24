@@ -43,11 +43,13 @@ export const recipientSchema = yup.object({
     .trim()
     .required("State is required")
     .max(60, "State is too long"),
+  // Indian PINs are exactly 6 digits; matches the Zynk KYC format so we
+  // don't silently send garbage through to the provider.
   postalCode: yup
     .string()
     .trim()
     .required("Postal code is required")
-    .max(12, "Postal code is too long"),
+    .matches(/^\d{6}$/, "Postal code must be exactly 6 digits"),
 });
 
 export type RecipientFormData = yup.InferType<typeof recipientSchema>;

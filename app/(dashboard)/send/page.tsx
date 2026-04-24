@@ -17,13 +17,20 @@ import { StepTransition } from "@/components/motion/step-transition";
 import { KycGate } from "@/components/kyc-gate";
 import { TransferResult } from "@/components/transfer/transfer-result";
 import { SelectRecipientStep } from "@/components/transfer/select-recipient-step";
+import { SelectBankStep } from "@/components/transfer/select-bank-step";
 import { TransferAmountStep } from "@/components/transfer/transfer-amount-step";
 import { ReviewTransferStep } from "@/components/transfer/review-transfer-step";
-import type { Recipient } from "@/types/recipient";
+import type { BankDetails, Recipient } from "@/types/recipient";
 
-type Step = "select" | "amount" | "review" | "result";
+type Step = "select" | "selectBank" | "amount" | "review" | "result";
 
-const STEP_ORDER: Step[] = ["select", "amount", "review", "result"];
+const STEP_ORDER: Step[] = [
+  "select",
+  "selectBank",
+  "amount",
+  "review",
+  "result",
+];
 
 export default function SendPage() {
   const router = useRouter();
@@ -63,13 +70,27 @@ export default function SendPage() {
     [recipients, selectedId],
   );
 
-  // If the recipient has exactly one bank, we can skip the picker.
-  const resolvedBankId = useMemo(() => {
+  const selectedBank = useMemo<BankDetails | null>(() => {
     if (!selected) return null;
-    if (selectedBankId) return selectedBankId;
-    if (selected.banks.length === 1) return selected.banks[0].id;
-    return selected.defaultBank?.id ?? null;
+    if (selectedBankId) {
+      return selected.banks.find((b) => b.id === selectedBankId) ?? null;
+    }
+    return selected.defaultBank ?? selected.banks[0] ?? null;
   }, [selected, selectedBankId]);
+
+  /**
+   * Pick the next step after the recipient is chosen: skip the bank picker
+   * if there's a single bank (or none — the amount step will show the
+   * "no bank" guardrail).
+   */
+  const advanceFromSelect = (r: Recipient) => {
+    setSelectedId(r.id);
+    if (r.banks.length > 1 && !selectedBankId) {
+      setStep("selectBank");
+    } else {
+      setStep("amount");
+    }
+  };
 
   const confirmSend = async () => {
     if (!selected) return;
@@ -86,7 +107,7 @@ export default function SendPage() {
         return await sendMoney.mutateAsync({
           payload: {
             recipientId: selected.id,
-            bankDetailsId: resolvedBankId ?? undefined,
+            bankDetailsId: selectedBank?.id ?? undefined,
             amountCents,
             note: note || undefined,
           },
@@ -161,7 +182,24 @@ export default function SendPage() {
     );
   }
 
-  const stepIndex = STEP_ORDER.indexOf(step);
+  // Visible step indices collapse the optional selectBank step so the user
+  // sees a consistent "N of 3" count when there's only one bank.
+  const VISIBLE_STEPS: Step[] =
+    selected && selected.banks.length > 1
+      ? ["select", "selectBank", "amount", "review"]
+      : ["select", "amount", "review"];
+  const currentVisibleIndex = VISIBLE_STEPS.indexOf(step);
+
+  const backStep: Step =
+    step === "review"
+      ? "amount"
+      : step === "amount"
+        ? selected && selected.banks.length > 1
+          ? "selectBank"
+          : "select"
+        : step === "selectBank"
+          ? "select"
+          : "select";
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-8">
@@ -173,11 +211,7 @@ export default function SendPage() {
           size="sm"
           className="-ml-2"
           asChild={step === "select"}
-          onClick={
-            step === "select"
-              ? undefined
-              : () => setStep(step === "review" ? "amount" : "select")
-          }
+          onClick={step === "select" ? undefined : () => setStep(backStep)}
         >
           {step === "select" ? (
             <Link href={ROUTES.ROOT}>
@@ -192,9 +226,9 @@ export default function SendPage() {
           )}
         </Button>
         <div className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-          {(["select", "amount", "review"] as const).map((s, i) => {
-            const isActive = STEP_ORDER.indexOf(s) === stepIndex;
-            const isDone = STEP_ORDER.indexOf(s) < stepIndex;
+          {VISIBLE_STEPS.map((s, i) => {
+            const isActive = i === currentVisibleIndex;
+            const isDone = i < currentVisibleIndex;
             return (
               <div key={s} className="flex items-center gap-1.5">
                 {i > 0 && <div className="h-px w-4 bg-border" />}
@@ -223,11 +257,20 @@ export default function SendPage() {
               hasDepositAccount={!!account?.hasDepositAccount}
               recipients={recipients}
               isLoading={isLoading}
-              onSelect={(r) => {
-                setSelectedId(r.id);
-                setStep("amount");
-              }}
+              onSelect={(r) => advanceFromSelect(r)}
               onAddRecipient={() => router.push(ROUTES.RECIPIENTS_NEW)}
+            />
+          </StepTransition>
+        )}
+
+        {step === "selectBank" && selected && (
+          <StepTransition key="selectBank">
+            <SelectBankStep
+              recipient={selected}
+              selectedBankId={selectedBank?.id ?? null}
+              onSelect={(bankId) => setSelectedBankId(bankId)}
+              onContinue={() => setStep("amount")}
+              onBack={() => setStep("select")}
             />
           </StepTransition>
         )}
@@ -236,6 +279,7 @@ export default function SendPage() {
           <StepTransition key="amount">
             <TransferAmountStep
               recipient={selected}
+              selectedBank={selectedBank}
               onContinue={({ amount: a, note: n }) => {
                 setAmount(a);
                 setNote(n);
@@ -249,6 +293,7 @@ export default function SendPage() {
           <StepTransition key="review">
             <ReviewTransferStep
               recipient={selected}
+              selectedBank={selectedBank}
               amount={amount}
               note={note}
               isSending={sendMoney.isPending}
