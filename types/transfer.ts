@@ -1,5 +1,6 @@
 export interface SendMoneyPayload {
   recipientId: string;
+  bankDetailsId?: string;
   amountCents: number;
   note?: string;
 }

@@ -40,7 +40,7 @@ export function TransferAmountStep({
             <span className="text-brand">{recipient.firstName}</span>?
           </>
         }
-        subtitle={`Funds will arrive in ${recipient.bankName ?? "their linked account"}.`}
+        subtitle={`Funds will arrive in ${recipient.defaultBank?.bankName ?? "their linked account"}.`}
       />
 
       <Card variant="elevated" className="p-6 sm:p-8">

@@ -56,7 +56,9 @@ export function ReviewTransferStep({
 
         <div className="space-y-3 p-6 text-sm">
           <Row label="Bank">
-            {recipient.bankName} · {recipient.bankAccountNumberMasked}
+            {recipient.defaultBank
+              ? `${recipient.defaultBank.bankName ?? "Bank"} · ${recipient.defaultBank.bankAccountNumberMasked}`
+              : "—"}
           </Row>
           <Row label="Recipient">{recipient.email}</Row>
           {note && <Row label="Note">{note}</Row>}

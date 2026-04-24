@@ -29,6 +29,7 @@ export default function SendPage() {
   const router = useRouter();
   const search = useSearchParams();
   const preselectedId = search.get("recipient");
+  const preselectedBankId = search.get("bank");
   const { data: account } = useAccount();
   const { data: recipients, isLoading } = useRecipients();
   const sendMoney = useSendMoney();
@@ -53,11 +54,22 @@ export default function SendPage() {
     resetIdempotencyKey,
   } = useSendMoneyState<Step>(preselectedId ? "amount" : "select");
   const [selectedId, setSelectedId] = useState<string | null>(preselectedId);
+  const [selectedBankId, setSelectedBankId] = useState<string | null>(
+    preselectedBankId,
+  );
 
   const selected = useMemo<Recipient | undefined>(
     () => recipients?.find((r) => r.id === selectedId),
     [recipients, selectedId],
   );
+
+  // If the recipient has exactly one bank, we can skip the picker.
+  const resolvedBankId = useMemo(() => {
+    if (!selected) return null;
+    if (selectedBankId) return selectedBankId;
+    if (selected.banks.length === 1) return selected.banks[0].id;
+    return selected.defaultBank?.id ?? null;
+  }, [selected, selectedBankId]);
 
   const confirmSend = async () => {
     if (!selected) return;
@@ -74,6 +86,7 @@ export default function SendPage() {
         return await sendMoney.mutateAsync({
           payload: {
             recipientId: selected.id,
+            bankDetailsId: resolvedBankId ?? undefined,
             amountCents,
             note: note || undefined,
           },

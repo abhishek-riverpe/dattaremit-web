@@ -20,8 +20,12 @@ import type {
 } from "@/types/api";
 import type {
   Recipient,
+  BankDetails,
   CreateRecipientPayload,
   AddRecipientBankPayload,
+  UpdateRecipientBankPayload,
+  CheckIdentityPayload,
+  CheckIdentityResult,
 } from "@/types/recipient";
 import type {
   SendMoneyPayload,
@@ -238,8 +242,60 @@ export const addRecipientBank = (
     headers: idempotencyHeaders(idempotencyKey),
   });
 
+export const listRecipientBanks = (id: string): Promise<BankDetails[]> =>
+  api.get(`/recipients/${id}/banks`);
+
+export const updateRecipientBank = (
+  recipientId: string,
+  bankId: string,
+  data: UpdateRecipientBankPayload
+): Promise<BankDetails> =>
+  api.patch(`/recipients/${recipientId}/banks/${bankId}`, data);
+
+export const setDefaultRecipientBank = (
+  recipientId: string,
+  bankId: string
+): Promise<BankDetails> =>
+  api.post(`/recipients/${recipientId}/banks/${bankId}/default`);
+
+export const deleteRecipientBank = (
+  recipientId: string,
+  bankId: string
+): Promise<void> =>
+  api.delete(`/recipients/${recipientId}/banks/${bankId}`);
+
+export const unlinkRecipient = (id: string): Promise<void> =>
+  api.delete(`/recipients/${id}`);
+
+export const checkRecipientIdentity = (
+  data: CheckIdentityPayload
+): Promise<CheckIdentityResult> =>
+  api.post("/recipients/check-identity", data);
+
 export const resendRecipientKyc = (id: string): Promise<void> =>
   api.post(`/recipients/${id}/resend-kyc`);
+
+// ── User's own banks (polymorphic BankDetails, ownerType=USER) ──
+export const listMyBanks = (): Promise<BankDetails[]> => api.get("/banks");
+
+export const addMyBank = (
+  data: AddRecipientBankPayload,
+  idempotencyKey?: string
+): Promise<BankDetails> =>
+  api.post("/banks", data, {
+    headers: idempotencyHeaders(idempotencyKey),
+  });
+
+export const updateMyBank = (
+  bankId: string,
+  data: UpdateRecipientBankPayload
+): Promise<BankDetails> => api.patch(`/banks/${bankId}`, data);
+
+export const setDefaultMyBank = (bankId: string): Promise<BankDetails> =>
+  api.post(`/banks/${bankId}/default`);
+
+export const deleteMyBank = (bankId: string): Promise<void> =>
+  api.delete(`/banks/${bankId}`);
 
 // ── Transfers ──
 export const sendMoney = (

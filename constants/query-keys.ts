@@ -15,6 +15,11 @@ export const queryKeys = {
     all: ["recipients"] as const,
     list: () => ["recipients", "list"] as const,
     detail: (id: string) => ["recipients", id] as const,
+    banks: (id: string) => ["recipients", id, "banks"] as const,
+  },
+  myBanks: {
+    all: ["my-banks"] as const,
+    list: () => ["my-banks", "list"] as const,
   },
   notifications: {
     all: ["notifications"] as const,

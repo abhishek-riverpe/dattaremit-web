@@ -69,7 +69,7 @@ export default function RecipientBankPage({
             defaultValues={{
               accountName:
                 `${recipient.firstName} ${recipient.lastName}`.trim(),
-              ifsc: recipient.bankIfsc ?? "",
+              ifsc: recipient.defaultBank?.bankIfsc ?? "",
             }}
             onSubmit={async (data) => {
               try {

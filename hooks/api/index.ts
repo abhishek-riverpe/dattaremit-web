@@ -22,6 +22,23 @@ export { useCreateRecipient } from "./use-create-recipient";
 export { useUpdateRecipient } from "./use-update-recipient";
 export { useAddRecipientBank } from "./use-add-recipient-bank";
 export { useResendRecipientKyc } from "./use-resend-recipient-kyc";
+export { useCheckRecipientIdentity } from "./use-check-recipient-identity";
+export { useUnlinkRecipient } from "./use-unlink-recipient";
+export {
+  useRecipientBanks,
+  useUpdateRecipientBank,
+  useSetDefaultRecipientBank,
+  useDeleteRecipientBank,
+} from "./use-recipient-banks";
+
+// User's own banks
+export {
+  useMyBanks,
+  useAddMyBank,
+  useUpdateMyBank,
+  useSetDefaultMyBank,
+  useDeleteMyBank,
+} from "./use-my-banks";
 
 // Notifications
 export { useNotifications } from "./use-notifications";
