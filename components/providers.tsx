@@ -14,6 +14,7 @@ import { ROUTES } from "@/constants/routes";
 import { Toaster } from "@/components/ui/sonner";
 import { InAppBanner } from "@/components/notifications/in-app-banner";
 import { PushListener } from "@/components/notifications/push-listener";
+import { SentryUserContext } from "@/components/sentry-user-context";
 
 function AuthTokenBridge({ children }: { children: React.ReactNode }) {
   const { getToken, isLoaded, isSignedIn } = useAuth();
@@ -72,6 +73,7 @@ export function Providers({
       >
         <QueryClientProvider client={queryClient}>
           <AuthTokenBridge>
+            <SentryUserContext />
             {children}
             <PushListener />
             <InAppBanner />
