@@ -35,14 +35,39 @@ const STEPS: readonly StepperStep[] = [
 ];
 
 const DRAFT_KEY = "dattaremit:new-recipient-draft";
+// Drafts older than this are dropped on read. Without an expiry, a wizard
+// abandoned months ago could pre-fill stale contact info that now belongs
+// to a different person, or whose KYC has since changed.
+const DRAFT_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+
+type StoredDraft = {
+  savedAt: number;
+  values: Partial<RecipientFormData>;
+};
 
 function readDraft(): Partial<RecipientFormData> | null {
   if (typeof window === "undefined") return null;
   try {
     const raw = window.localStorage.getItem(DRAFT_KEY);
     if (!raw) return null;
-    const parsed = JSON.parse(raw) as Partial<RecipientFormData>;
-    return typeof parsed === "object" && parsed ? parsed : null;
+    const parsed = JSON.parse(raw) as Partial<StoredDraft> | Partial<RecipientFormData>;
+    if (
+      !parsed ||
+      typeof parsed !== "object" ||
+      typeof (parsed as StoredDraft).savedAt !== "number" ||
+      typeof (parsed as StoredDraft).values !== "object"
+    ) {
+      // Legacy format (raw values, pre-expiry) or anything malformed: clear it
+      // so we don't carry it forward and so the user starts fresh.
+      window.localStorage.removeItem(DRAFT_KEY);
+      return null;
+    }
+    const { savedAt, values } = parsed as StoredDraft;
+    if (Date.now() - savedAt > DRAFT_TTL_MS) {
+      window.localStorage.removeItem(DRAFT_KEY);
+      return null;
+    }
+    return values;
   } catch {
     return null;
   }
@@ -51,7 +76,8 @@ function readDraft(): Partial<RecipientFormData> | null {
 function writeDraft(values: Partial<RecipientFormData>) {
   if (typeof window === "undefined") return;
   try {
-    window.localStorage.setItem(DRAFT_KEY, JSON.stringify(values));
+    const payload: StoredDraft = { savedAt: Date.now(), values };
+    window.localStorage.setItem(DRAFT_KEY, JSON.stringify(payload));
   } catch {
     // Storage may be full or disabled — silently drop the draft.
   }
@@ -176,6 +202,12 @@ export function NewRecipientWizard() {
     try {
       const recipient = await createRecipient.mutateAsync(data);
       clearDraft();
+      // The success screen MUST honor recipient.shared even when the user
+      // never saw a match card. The check-identity result is cached on the
+      // contact step, so a brand-new shared identity created by another user
+      // between cache-time and submit-time is invisible to us — the server's
+      // global dedup will silently link instead of create, returning shared:
+      // true. Always trust recipient.shared, never assume opts.shared alone.
       setCreated({
         recipient,
         wasShared: Boolean(opts?.shared || recipient.shared),
