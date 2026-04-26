@@ -1,5 +1,6 @@
 import axios from "axios";
 import { generateIdempotencyKey } from "@/lib/idempotency";
+import { logger } from "@/lib/logger";
 import type {
   ApiResponse,
   User,
@@ -134,12 +135,18 @@ api.interceptors.response.use(
   (error) => {
     if (axios.isAxiosError(error) && error.response) {
       const body = error.response.data as ApiResponse<unknown> | undefined;
+      logger.error("API request failed", {
+        status: error.response.status,
+        code: body?.code,
+        url: error.config?.url,
+      });
       throw new ApiError(
         error.response.status,
         safeErrorMessage(error.response.status),
         { code: body?.code, details: body?.data },
       );
     }
+    logger.error("Unexpected API error", { error: String(error) });
     throw error;
   }
 );

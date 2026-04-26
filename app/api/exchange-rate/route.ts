@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import YahooFinance from "yahoo-finance2";
+import { logger } from "@/lib/logger";
 
 export const revalidate = 60;
 
@@ -14,6 +15,7 @@ export async function GET() {
     const rate = quote?.regularMarketPrice;
 
     if (typeof rate !== "number" || !isFinite(rate) || rate <= 0) {
+      logger.warn("Exchange rate unavailable from Yahoo Finance", { rate });
       return NextResponse.json(
         { success: false, message: "Rate unavailable" },
         { status: 502 },
@@ -43,7 +45,8 @@ export async function GET() {
         },
       },
     );
-  } catch {
+  } catch (err) {
+    logger.error("Failed to fetch exchange rate", { error: String(err) });
     return NextResponse.json(
       { success: false, message: "Failed to fetch exchange rate" },
       { status: 502 },
