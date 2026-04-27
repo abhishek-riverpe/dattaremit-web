@@ -12,7 +12,7 @@ export default function NewRecipientPage() {
 
   if (account && account.accountStatus !== "ACTIVE") {
     return (
-      <div className="space-y-7">
+      <div className="mx-auto w-full max-w-2xl space-y-7">
         <BackLink href={ROUTES.RECIPIENTS} />
         <KycGate
           accountStatus={account.accountStatus}
@@ -23,7 +23,7 @@ export default function NewRecipientPage() {
   }
 
   return (
-    <div className="space-y-7">
+    <div className="mx-auto w-full max-w-2xl space-y-7">
       <div className="flex flex-col gap-3">
         <BackLink href={ROUTES.RECIPIENTS} />
         <PageHeader
