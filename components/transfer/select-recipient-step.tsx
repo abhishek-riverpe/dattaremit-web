@@ -1,13 +1,11 @@
 "use client";
 
-import { useState } from "react";
 import { UserPlus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AddRecipientWarningModal } from "@/components/transfer/add-recipient-warning-modal";
 import { RecipientCard } from "@/components/recipients/recipient-card";
 import { SelfTransferCard } from "@/components/transfer/self-transfer-card";
 import type { Recipient } from "@/types/recipient";
@@ -30,8 +28,6 @@ export function SelectRecipientStep({
   onSelect,
   onAddRecipient,
 }: SelectRecipientStepProps) {
-  const [warningOpen, setWarningOpen] = useState(false);
-
   const eligible = recipients?.filter(
     (r) => r.kycStatus === "APPROVED" && r.hasBankAccount,
   );
@@ -62,7 +58,7 @@ export function SelectRecipientStep({
           variant="outline"
           size="lg"
           className="w-full"
-          onClick={() => setWarningOpen(true)}
+          onClick={onAddRecipient}
         >
           <UserPlus />
           Add Recipient
@@ -104,15 +100,6 @@ export function SelectRecipientStep({
           ))}
         </div>
       )}
-
-      <AddRecipientWarningModal
-        open={warningOpen}
-        onOpenChange={setWarningOpen}
-        onConfirm={() => {
-          setWarningOpen(false);
-          onAddRecipient();
-        }}
-      />
     </>
   );
 }

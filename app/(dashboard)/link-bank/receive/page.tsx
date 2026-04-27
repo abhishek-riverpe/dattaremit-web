@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -22,6 +23,7 @@ import { Form } from "@/components/ui/form";
 import { TextField } from "@/components/ui/text-field";
 import { PageHeader } from "@/components/ui/page-header";
 import { BackLink } from "@/components/ui/back-link";
+import { AddRecipientWarningModal } from "@/components/transfer/add-recipient-warning-modal";
 
 export default function ReceiveBankPage() {
   const router = useRouter();
@@ -30,6 +32,7 @@ export default function ReceiveBankPage() {
   const accountStatus = account?.accountStatus;
   const indianKycStatus = account?.indianKycStatus ?? "NONE";
   const addDeposit = useAddDepositAccount();
+  const [warningOpen, setWarningOpen] = useState(true);
 
   const form = useForm<DepositAccountFormData>({
     resolver: yupResolver(depositAccountSchema),
@@ -85,60 +88,71 @@ export default function ReceiveBankPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-2xl space-y-7">
-      <div className="flex flex-col gap-3">
-        <BackLink href={ROUTES.LINK_BANK} />
-        <PageHeader
-          eyebrow="Your Indian bank"
-          title={
-            <>
-              Add your{" "}
-              <span className="text-brand">
-                Indian bank
-              </span>
-              .
-            </>
-          }
-          subtitle="Enter your own Indian bank details. This is where money will land when you send to yourself."
-        />
+    <>
+      <div className="mx-auto w-full max-w-2xl space-y-7">
+        <div className="flex flex-col gap-3">
+          <BackLink href={ROUTES.LINK_BANK} />
+          <PageHeader
+            eyebrow="Your Indian bank"
+            title={
+              <>
+                Add your{" "}
+                <span className="text-brand">
+                  Indian bank
+                </span>
+                .
+              </>
+            }
+            subtitle="Enter your own Indian bank details. This is where money will land when you send to yourself."
+          />
+        </div>
+
+        <Card variant="elevated" className="p-6 sm:p-8">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+              <TextField
+                control={form.control}
+                name="accountName"
+                label="Account holder name"
+                placeholder="As per bank records"
+              />
+              <TextField
+                control={form.control}
+                name="accountNumber"
+                label="Account number"
+                placeholder="Enter account number"
+              />
+              <TextField
+                control={form.control}
+                name="ifsc"
+                label="IFSC code"
+                placeholder="e.g. SBIN0001234"
+                transform={(v) => v.toUpperCase()}
+              />
+
+              <Button
+                type="submit"
+                variant="brand"
+                size="lg"
+                className="w-full"
+                loading={addDeposit.isPending}
+              >
+                Add Indian bank
+              </Button>
+            </form>
+          </Form>
+        </Card>
       </div>
 
-      <Card variant="elevated" className="p-6 sm:p-8">
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-            <TextField
-              control={form.control}
-              name="accountName"
-              label="Account holder name"
-              placeholder="As per bank records"
-            />
-            <TextField
-              control={form.control}
-              name="accountNumber"
-              label="Account number"
-              placeholder="Enter account number"
-            />
-            <TextField
-              control={form.control}
-              name="ifsc"
-              label="IFSC code"
-              placeholder="e.g. SBIN0001234"
-              transform={(v) => v.toUpperCase()}
-            />
-
-            <Button
-              type="submit"
-              variant="brand"
-              size="lg"
-              className="w-full"
-              loading={addDeposit.isPending}
-            >
-              Add Indian bank
-            </Button>
-          </form>
-        </Form>
-      </Card>
-    </div>
+      <AddRecipientWarningModal
+        open={warningOpen}
+        onOpenChange={(open) => {
+          setWarningOpen(open);
+          if (!open) router.push(ROUTES.LINK_BANK);
+        }}
+        onConfirm={() => setWarningOpen(false)}
+      />
+    </>
   );
 }
 

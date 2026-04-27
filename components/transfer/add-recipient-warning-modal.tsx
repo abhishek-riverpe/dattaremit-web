@@ -29,11 +29,12 @@ export function AddRecipientWarningModal({
             <AlertTriangle className="size-7" />
           </div>
           <DialogTitle className="text-center text-xl">
-            Please confirm recipient details
+            Please confirm your bank details
           </DialogTitle>
           <DialogDescription className="text-center">
-            Before adding a recipient, make sure their name, bank details, and
-            account type are correct. Transfers cannot be reversed once sent.
+            Before adding your Indian bank account, make sure your name, account
+            number, and IFSC code are correct. Transfers cannot be reversed once
+            sent.
           </DialogDescription>
         </DialogHeader>
 
