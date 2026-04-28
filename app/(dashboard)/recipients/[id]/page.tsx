@@ -164,7 +164,7 @@ export default function RecipientDetailPage({
         />
         <div className="relative flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex items-start gap-4">
-            <div className="flex size-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand/30 to-brand-soft/40 font-semibold text-xl text-foreground">
+            <div className="flex size-14 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-brand/30 to-brand-soft/40 font-semibold text-xl text-foreground">
               {initials}
             </div>
             <div className="flex flex-col gap-1">

@@ -40,8 +40,15 @@ export function Stepper({ steps, activeIndex, className }: StepperProps) {
         {steps.map((step, idx) => {
           const reached = idx <= activeIndex;
           const done = idx < activeIndex;
+          const isLast = idx === total - 1;
           return (
-            <div key={step.id} className="flex flex-1 items-center gap-2">
+            <div
+              key={step.id}
+              className={cn(
+                "flex items-center gap-2",
+                !isLast && "flex-1",
+              )}
+            >
               <div
                 className={cn(
                   "relative flex size-6 shrink-0 items-center justify-center rounded-full border transition-colors",
@@ -56,8 +63,8 @@ export function Stepper({ steps, activeIndex, className }: StepperProps) {
                   <span className="text-[11px] font-semibold">{idx + 1}</span>
                 )}
               </div>
-              {idx < total - 1 && (
-                <div className="relative h-[2px] flex-1 overflow-hidden rounded-full bg-border">
+              {!isLast && (
+                <div className="relative h-0.5 flex-1 overflow-hidden rounded-full bg-border">
                   <motion.div
                     initial={false}
                     animate={{ scaleX: idx < activeIndex ? 1 : 0 }}
