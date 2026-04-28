@@ -77,10 +77,6 @@ export function WelcomeContent() {
               </span>
               <span className="inline-flex items-center gap-2">
                 <span className="size-1.5 rounded-full bg-success" />
-                140+ corridors
-              </span>
-              <span className="inline-flex items-center gap-2">
-                <span className="size-1.5 rounded-full bg-success" />
                 Settles in 60s
               </span>
             </div>
