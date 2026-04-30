@@ -26,8 +26,8 @@ echo "--- ESLint check ---"
 npx eslint "$FILE" || FAIL=1
 
 if [ $FAIL -ne 0 ]; then
-  echo ""
-  echo "ESLint errors remain after auto-fix. Fix them before continuing."
+  echo "" >&2
+  echo "ESLint errors remain after auto-fix. Fix them before continuing." >&2
+  exit 2
 fi
-
-exit $FAIL
+exit 0
