@@ -1,0 +1,91 @@
+rules:
+  # NOTE: XSS, injection, dynamic code execution, and React-specific security
+  # patterns are covered by the registry rulesets passed via CLI:
+  #   p/owasp-top-ten, p/react, p/secrets, p/typescript, p/jwt
+  # The rules below are project-specific custom additions.
+
+  # ── Console / Debug ───────────────────────────────────────────────────────────
+  - id: no-console-log
+    pattern: console.log(...)
+    message: "Remove console.log before shipping. Use a structured logger or remove entirely."
+    languages: [typescript, javascript]
+    severity: WARNING
+
+  # ── Axios error handling ───────────────────────────────────────────────────────
+  - id: axios-call-without-catch
+    patterns:
+      - pattern: axios.$METHOD(...)
+      - pattern-not: axios.$METHOD(...).catch(...)
+      - pattern-not: |
+          try {
+            ...
+            axios.$METHOD(...)
+            ...
+          } catch(...) { ... }
+    message: "Axios call is missing error handling. Add .catch() or wrap in try/catch."
+    languages: [typescript, javascript]
+    severity: WARNING
+
+  # ── Hardcoded URLs ─────────────────────────────────────────────────────────────
+  - id: no-hardcoded-api-url
+    patterns:
+      - pattern: |
+          "$URL"
+      - metavariable-regex:
+          metavariable: $URL
+          regex: 'https?://(api\.|app\.|staging\.|prod\.).*'
+    message: "Hardcoded URL detected. Use environment variables (process.env.NEXT_PUBLIC_*) instead."
+    languages: [typescript, javascript]
+    severity: WARNING
+    paths:
+      exclude:
+        - "**/*.test.ts"
+        - "**/*.test.tsx"
+        - "**/*.spec.ts"
+        - "**/*.spec.tsx"
+
+  # ── localStorage (SSR safety) ──────────────────────────────────────────────────
+  - id: direct-localstorage-via-window
+    pattern: window.localStorage.$METHOD(...)
+    message: "Direct window.localStorage access is unsafe in Next.js SSR. Use a utility that checks typeof window first."
+    languages: [typescript, javascript]
+    severity: WARNING
+
+  - id: bare-localstorage-access
+    pattern: localStorage.$METHOD(...)
+    message: "Direct localStorage access is unsafe in Next.js SSR. Use a utility that checks typeof window first."
+    languages: [typescript, javascript]
+    severity: WARNING
+
+  # ── TypeScript safety ──────────────────────────────────────────────────────────
+  - id: no-explicit-any-cast
+    pattern: ($X as any)
+    message: "Avoid casting to 'any'. Use a proper type or 'unknown' with a type guard instead."
+    languages: [typescript]
+    severity: WARNING
+
+  # ── Auth / Clerk ───────────────────────────────────────────────────────────────
+  - id: no-unprotected-api-route
+    patterns:
+      - pattern: |
+          export async function $HANDLER(request: NextRequest, ...) {
+            ...
+          }
+      - pattern-not: |
+          export async function $HANDLER(request: NextRequest, ...) {
+            ...
+            auth()
+            ...
+          }
+      - pattern-not: |
+          export async function $HANDLER(request: NextRequest, ...) {
+            ...
+            currentUser()
+            ...
+          }
+    message: "API route handler may be missing Clerk auth check. Verify this route is intentionally public or protected by middleware."
+    languages: [typescript]
+    severity: WARNING
+    paths:
+      include:
+        - "app/api/**"
