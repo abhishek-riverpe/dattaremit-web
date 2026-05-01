@@ -13,7 +13,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "knip": "knip",
-    "test": "jest"
+    "test": "jest",
+    "semgrep": "semgrep scan --config=p/owasp-top-ten --config=p/secrets --config=p/react --config=p/typescript --config=p/jwt --config=.github/.semgrep.yml --error ."
   },
   "dependencies": {
     "@clerk/nextjs": "^6.39.2",
@@ -51,7 +52,8 @@
   "lint-staged": {
     "*.{ts,tsx,js,jsx,mts,mjs}": [
       "prettier --write",
-      "eslint --fix"
+      "eslint --fix",
+      "bash -c 'command -v semgrep > /dev/null 2>&1 && semgrep --config=.github/.semgrep.yml --error || echo \"semgrep not installed — skipping local scan (CI will validate)\"'"
     ],
     "*.{json,css,md}": [
       "prettier --write"
