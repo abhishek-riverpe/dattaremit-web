@@ -11,16 +11,16 @@ npm run dev      # http://localhost:3000
 
 ## Scripts
 
-| Command | What it does |
-|---|---|
-| `npm run dev` | Start the Next.js dev server |
-| `npm run build` | Production build |
-| `npm run start` | Run the production build |
-| `npm run lint` / `npm run lint:fix` | ESLint |
-| `npm run type-check` | `tsc --noEmit` |
-| `npm run format` / `npm run format:check` | Prettier |
-| `npm run test` | Jest |
-| `npm run knip` | Dead-code/unused-export scan |
+| Command                                   | What it does                 |
+| ----------------------------------------- | ---------------------------- |
+| `npm run dev`                             | Start the Next.js dev server |
+| `npm run build`                           | Production build             |
+| `npm run start`                           | Run the production build     |
+| `npm run lint` / `npm run lint:fix`       | ESLint                       |
+| `npm run type-check`                      | `tsc --noEmit`               |
+| `npm run format` / `npm run format:check` | Prettier                     |
+| `npm run test`                            | Jest                         |
+| `npm run knip`                            | Dead-code/unused-export scan |
 
 ## Stack
 
@@ -35,12 +35,12 @@ npm run dev      # http://localhost:3000
 
 ## Routing
 
-| Group | Purpose |
-|---|---|
-| `app/(auth)/` | Sign-in / sign-up screens |
-| `app/(dashboard)/` | Authenticated user pages |
+| Group              | Purpose                        |
+| ------------------ | ------------------------------ |
+| `app/(auth)/`      | Sign-in / sign-up screens      |
+| `app/(dashboard)/` | Authenticated user pages       |
 | `app/(marketing)/` | Public landing/marketing pages |
-| `app/onboarding/` | First-time setup flows |
+| `app/onboarding/`  | First-time setup flows         |
 
 ## Environment
 
