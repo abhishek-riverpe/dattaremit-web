@@ -7,5 +7,8 @@ Sentry.init({
   debug: process.env.NODE_ENV === "development",
   tracesSampleRate: process.env.NODE_ENV === "development" ? 1.0 : 0.1,
   enableLogs: true,
-  integrations: [Sentry.consoleLoggingIntegration({ levels: ["warn", "error"] })],
+  integrations: [
+    Sentry.consoleLoggingIntegration({ levels: ["info", "warn"] }),
+    Sentry.captureConsoleIntegration({ levels: ["error"] }),
+  ],
 });

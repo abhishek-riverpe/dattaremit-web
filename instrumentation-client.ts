@@ -15,8 +15,12 @@ Sentry.init({
       maskAllInputs: true,
       blockAllMedia: false,
     }),
-    Sentry.consoleLoggingIntegration({ levels: ["warn", "error"] }),
+    Sentry.consoleLoggingIntegration({ levels: ["info", "warn"] }),
+    Sentry.captureConsoleIntegration({ levels: ["error"] }),
   ],
 });
 
 export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;
+
+// Debug test error — remove after confirming Sentry issue capture works
+Sentry.captureException(new Error("[Sentry Debug] Test error from instrumentation-client.ts"));
