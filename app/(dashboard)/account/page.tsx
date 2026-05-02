@@ -88,7 +88,9 @@ export default function AccountPage() {
             )}
             {serverUser.dateOfBirth && (
               <Row icon={<Calendar className="size-4" />} label="Date of birth">
-                {new Date(serverUser.dateOfBirth).toLocaleDateString()}
+                {new Date(serverUser.dateOfBirth).toLocaleDateString(undefined, {
+                  timeZone: "UTC",
+                })}
               </Row>
             )}
             <Row icon={<MapPin className="size-4" />} label="Addresses">
